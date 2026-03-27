@@ -314,7 +314,7 @@ const requestInterpretation = async (
         },
       ],
       temperature: INTERPRETATION_TEMPERATURE,
-      max_tokens: 2048,
+      max_tokens: 1024,
       stream: true,
     }),
   })
@@ -479,12 +479,19 @@ function App() {
   const [result, setResult] = useState<HexagramResult | null>(null)
   const [isCasting, setIsCasting] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
+  const [revealResult, setRevealResult] = useState(false)
   const castIdRef = useRef(0)
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasResult = Boolean(result?.entry)
 
   const resetCast = () => {
+    if (revealTimerRef.current) {
+      clearTimeout(revealTimerRef.current)
+      revealTimerRef.current = null
+    }
     setIsCasting(false)
+    setRevealResult(false)
     setResult(null)
     castIdRef.current += 1
   }
@@ -505,6 +512,7 @@ function App() {
     const { number, entry } = deriveHexagram(lines)
     const { number: changedNumber, entry: changedEntry } = deriveHexagram(changedLines)
     setIsCasting(true)
+    setRevealResult(false)
     setResult({
       lines,
       number,
@@ -514,6 +522,9 @@ function App() {
       changedEntry,
       interpretation: '解读生成中...',
     })
+    revealTimerRef.current = setTimeout(() => {
+      setRevealResult(true)
+    }, 3000)
     try {
       let hasReceivedFirstChunk = false
       const finalText = await requestInterpretation(
@@ -627,7 +638,7 @@ function App() {
         </div>
       </section>
 
-      {isCasting && !hasResult ? (
+      {!revealResult ? (
         <section className="panel casting-panel">
           <div className="casting-content">
             <svg className="yin-yang-spinner" viewBox="0 0 120 120" aria-hidden="true">
@@ -653,7 +664,7 @@ function App() {
         </section>
       ) : null}
 
-      {hasResult ? (
+      {hasResult && revealResult ? (
         <>
           <main className="layout">
             <HexagramCard heading="本卦卦象" entry={result?.entry ?? null} lines={displayLines} />

@@ -5,6 +5,7 @@
       "maxDuration": 60
     }
   },
+  "regions": ["hkg1"],
   "rewrites": [
     {
       "source": "/api/bailian",
