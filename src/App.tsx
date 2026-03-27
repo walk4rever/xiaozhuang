@@ -280,7 +280,7 @@ const requestInterpretation = async (
       ],
       temperature: INTERPRETATION_TEMPERATURE,
       max_tokens: 2048,
-      stream: false,
+      stream: true,
     }),
   })
   if (!response.ok) {
