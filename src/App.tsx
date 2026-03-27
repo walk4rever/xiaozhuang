@@ -638,7 +638,7 @@ function App() {
         </div>
       </section>
 
-      {!revealResult ? (
+      {isCasting && !revealResult ? (
         <section className="panel casting-panel">
           <div className="casting-content">
             <svg className="yin-yang-spinner" viewBox="0 0 120 120" aria-hidden="true">
