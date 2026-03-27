@@ -515,12 +515,17 @@ function App() {
       interpretation: '解读生成中...',
     })
     try {
+      let hasReceivedFirstChunk = false
       const finalText = await requestInterpretation(
         lines,
         entry,
         changedEntry,
         (partial) => {
           if (castId === castIdRef.current) {
+            if (!hasReceivedFirstChunk && partial.trim()) {
+              hasReceivedFirstChunk = true
+              setIsCasting(false)
+            }
             setResult((prev) =>
               prev ? { ...prev, interpretation: partial } : prev
             )
