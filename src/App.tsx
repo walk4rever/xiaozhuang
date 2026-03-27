@@ -230,6 +230,21 @@ const parseSseLine = (line: string): string | null => {
   }
 }
 
+const extractJsonInterpretation = (payload: unknown): string | null => {
+  if (!payload || typeof payload !== 'object') return null
+  const parsed = payload as {
+    choices?: Array<{
+      delta?: { content?: string }
+      message?: { content?: string }
+    }>
+  }
+  return (
+    parsed.choices?.[0]?.message?.content ??
+    parsed.choices?.[0]?.delta?.content ??
+    null
+  )
+}
+
 const requestInterpretation = async (
   lines: Line[],
   entry: HexagramEntry | null,
@@ -265,12 +280,22 @@ const requestInterpretation = async (
       ],
       temperature: INTERPRETATION_TEMPERATURE,
       max_tokens: 2048,
-      stream: true,
+      stream: false,
     }),
   })
   if (!response.ok) {
     const errorText = await response.text()
     throw new Error(`${response.status} ${errorText}`.trim())
+  }
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    const payload = (await response.json()) as unknown
+    const content = extractJsonInterpretation(payload)
+    if (!content) {
+      throw new Error('interpretation_empty')
+    }
+    onChunk?.(content)
+    return content
   }
   const reader = response.body?.getReader()
   if (!reader) {

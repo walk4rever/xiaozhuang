@@ -37,24 +37,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const errorText = await response.text();
       return res.status(response.status).send(errorText);
     }
-
-    // 设置响应头以支持 SSE
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error('No reader available');
-    }
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(value);
-    }
-
-    res.end();
+    const responseText = await response.text();
+    const contentType = response.headers.get('content-type') || 'application/json; charset=utf-8';
+    res.setHeader('Content-Type', contentType);
+    res.status(response.status).send(responseText);
   } catch (error) {
     console.error('Proxy error:', error);
     res.status(500).json({ error: 'Failed to fetch from upstream model provider' });
