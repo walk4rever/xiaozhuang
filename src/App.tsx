@@ -382,7 +382,7 @@ const requestInterpretation = async (
         }
       }
     }
-    if (done) {
+    if (done || doneSeen) {
       break
     }
   }
@@ -627,7 +627,7 @@ function App() {
         </div>
       </section>
 
-      {isCasting ? (
+      {isCasting && !hasResult ? (
         <section className="panel casting-panel">
           <div className="casting-content">
             <svg className="yin-yang-spinner" viewBox="0 0 120 120" aria-hidden="true">
