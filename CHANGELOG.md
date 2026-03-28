@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.6 - 2026-03-28
+- 修复流式解读时用户先看到原始 JSON 再格式化的问题：JSON 在完整可解析前保持显示"解读生成中..."
+- 将 Vercel API 函数切换至 Edge Runtime，解决 Hobby 计划下 Serverless 函数 10 秒硬限制导致的 504 超时问题（Edge Runtime 上限 30 秒）
+- 调整 fetch AbortSignal.timeout 为 25 秒，确保在函数超时前优先触发，避免冷硬断连
+
+> **技术备忘：Vite + Vercel Hobby 计划超时陷阱**
+> 普通 Vite 项目的 `api/*.ts` 为 Serverless 函数，Hobby 计划硬限 10 秒，`vercel.json` 里的 `maxDuration` 会被忽略。
+> Next.js App Router 路由使用 `export const maxDuration` 语法，Vercel 对其有特殊处理，实际可突破 Hobby 的 10 秒限制。
+> 解决方案：在 `api/llm.ts` 顶部加 `export const config = { runtime: 'edge' }`，切换为 Edge Runtime，Hobby 上限升至 30 秒，且原生支持 SSE 流式输出。
+
 ## v0.5.5 - 2026-03-28
 - LLM 接口路径统一改为中性命名 `/api/llm`
 - 删除供应商特定命名与默认供应商网关地址，运行时必须通过 `AI_*` 环境变量提供模型服务配置

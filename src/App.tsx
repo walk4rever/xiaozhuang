@@ -262,6 +262,22 @@ const extractJsonBlock = (text: string) => {
   return trimmed.slice(start, end + 1)
 }
 
+// During streaming, raw JSON arrives token-by-token. Only expose it to the UI
+// once parsing succeeds; otherwise keep showing the loading placeholder so
+// users never see half-built JSON.
+const toDisplayInterpretation = (raw: string): string => {
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('{')) return raw
+  const candidate = extractJsonBlock(trimmed)
+  if (!candidate) return '解读生成中...'
+  try {
+    JSON.parse(candidate)
+    return raw
+  } catch {
+    return '解读生成中...'
+  }
+}
+
 const parseInterpretation = (text: string): ParsedInterpretation => {
   const jsonCandidate = extractJsonBlock(text)
   if (jsonCandidate) {
@@ -636,7 +652,7 @@ function App() {
               setIsCasting(false)
             }
             setResult((prev) =>
-              prev ? { ...prev, interpretation: partial } : prev
+              prev ? { ...prev, interpretation: toDisplayInterpretation(partial) } : prev
             )
           }
         }
@@ -677,7 +693,7 @@ function App() {
         result.lines,
         result.entry,
         result.changedEntry,
-        (partial) => setResult((prev) => prev ? { ...prev, interpretation: partial } : prev)
+        (partial) => setResult((prev) => prev ? { ...prev, interpretation: toDisplayInterpretation(partial) } : prev)
       )
       setResult((prev) => prev ? { ...prev, interpretation: finalText } : prev)
     } catch (error) {
