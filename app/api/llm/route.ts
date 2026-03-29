@@ -42,7 +42,7 @@ const extractErrorMessage = (value: unknown): string | null => {
   return null
 }
 
-const classifyProxyError = (error: unknown) => {
+const classifyProxyError = (error: unknown, streaming: boolean) => {
   const candidate = error as {
     name?: string
     message?: string
@@ -70,7 +70,9 @@ const classifyProxyError = (error: unknown) => {
       status: 503,
       code: 'upstream_overloaded',
       message: '模型服务当前繁忙，请稍后再试。',
-      retryable: true,
+      // For streaming requests, retrying before sending the initial SSE response
+      // can cause Vercel to kill the function for not responding quickly enough.
+      retryable: !streaming,
     }
   }
 
@@ -186,11 +188,15 @@ export async function POST(request: Request) {
             Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify(upstreamPayload),
-          signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+          // Important: AbortSignal.timeout applies to the entire fetch lifecycle,
+          // including reading an active streaming response body. For SSE requests,
+          // that would abort a healthy stream mid-flight around 25s. Let Vercel's
+          // Edge maxDuration be the outer guardrail for streaming requests.
+          ...(shouldStream ? {} : { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) }),
         })
         break
       } catch (error) {
-        const classified = classifyProxyError(error)
+        const classified = classifyProxyError(error, shouldStream)
         console.error('Proxy fetch failed', {
           attempt,
           status: classified.status,
