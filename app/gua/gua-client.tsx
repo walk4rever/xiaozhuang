@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import zhouyi from '@/data/zhouyi.json'
 import Link from 'next/link'
 
@@ -151,6 +151,12 @@ const deriveHexagram = (lines: Line[]) => {
 }
 
 const INTERPRETATION_TEMPERATURE = 0.75
+const SHARE_ICON_PATH =
+  'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
+const SHARE_CARD_WIDTH = 1080
+const SHARE_CARD_MAX_HEIGHT = 5600
+const SHARE_DEST_URL = 'https://xz.air7.fun/gua'
+const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const buildInterpretationPrompt = (
   lines: Line[],
@@ -373,6 +379,273 @@ const tossLine = (): Line => {
   throw new Error(`tossLine: unexpected coin sum ${sum}, expected 6–9`)
 }
 
+const yaoLabel = (index: number) => {
+  if (index === 0) return '初爻'
+  if (index === 5) return '上爻'
+  return `第${index + 1}爻`
+}
+
+const wrapCanvasText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxLines = 999
+) => {
+  const lines: string[] = []
+  const paragraphs = text.replace(/\r/g, '').split('\n')
+
+  for (const paragraph of paragraphs) {
+    const source = paragraph.trim()
+    if (!source) {
+      lines.push('')
+      continue
+    }
+
+    let current = ''
+    for (const char of Array.from(source)) {
+      const next = current + char
+      if (ctx.measureText(next).width <= maxWidth) {
+        current = next
+        continue
+      }
+      if (current) lines.push(current)
+      current = char
+      if (lines.length >= maxLines) break
+    }
+    if (lines.length >= maxLines) break
+    if (current) lines.push(current)
+  }
+
+  if (lines.length > maxLines) return lines.slice(0, maxLines)
+  if (lines.length === maxLines && maxLines < 999) {
+    const joined = text.replace(/\s+/g, '')
+    const compact = lines.join('').replace(/\s+/g, '')
+    if (joined !== compact) {
+      const last = lines[maxLines - 1] ?? ''
+      lines[maxLines - 1] = `${last.slice(0, Math.max(0, last.length - 1))}…`
+    }
+  }
+  return lines
+}
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('图片加载失败'))
+    img.src = src
+  })
+
+const canvasToBlob = (canvas: HTMLCanvasElement, quality: number) =>
+  new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('分享图生成失败'))
+    }, 'image/jpeg', quality)
+  })
+
+const drawRoundedRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) => {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.arcTo(x + width, y, x + width, y + height, radius)
+  ctx.arcTo(x + width, y + height, x, y + height, radius)
+  ctx.arcTo(x, y + height, x, y, radius)
+  ctx.arcTo(x, y, x + width, y, radius)
+  ctx.closePath()
+}
+
+const drawHexagramOnCanvas = (
+  ctx: CanvasRenderingContext2D,
+  lines: Line[],
+  x: number,
+  y: number,
+  width: number,
+  lineHeight: number,
+  gap: number
+) => {
+  const displayLines = [...lines].reverse()
+  const segmentGap = Math.round(width * 0.16)
+  const halfWidth = (width - segmentGap) / 2
+
+  displayLines.forEach((line, index) => {
+    const lineY = y + index * (lineHeight + gap)
+    const fill = line.changing ? '#bf5b4a' : '#466f68'
+    if (line.yin) {
+      ctx.fillStyle = fill
+      drawRoundedRect(ctx, x, lineY, halfWidth, lineHeight, lineHeight / 2)
+      ctx.fill()
+      drawRoundedRect(ctx, x + halfWidth + segmentGap, lineY, halfWidth, lineHeight, lineHeight / 2)
+      ctx.fill()
+      return
+    }
+    ctx.fillStyle = fill
+    drawRoundedRect(ctx, x, lineY, width, lineHeight, lineHeight / 2)
+    ctx.fill()
+  })
+}
+
+const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
+  const canvas = document.createElement('canvas')
+  canvas.width = SHARE_CARD_WIDTH
+  canvas.height = SHARE_CARD_MAX_HEIGHT
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('分享图生成失败，请稍后再试。')
+
+  const w = canvas.width
+  const h = canvas.height
+  const padding = 76
+  const contentW = w - padding * 2
+
+  const bg = ctx.createLinearGradient(0, 0, 0, h)
+  bg.addColorStop(0, '#f8f4ec')
+  bg.addColorStop(0.55, '#efe8dc')
+  bg.addColorStop(1, '#e9dfd1')
+  ctx.fillStyle = bg
+  ctx.fillRect(0, 0, w, h)
+
+  ctx.textBaseline = 'top'
+  let y = 72
+
+  ctx.fillStyle = '#8b4a3c'
+  ctx.font = '600 30px "Noto Serif SC", serif'
+  ctx.fillText('小庄 · 问卦分享', padding, y)
+  y += 56
+
+  ctx.fillStyle = '#1f1a16'
+  ctx.font = '700 54px "Noto Serif SC", serif'
+  ctx.fillText(result.entry?.title ?? `第${result.number}卦`, padding, y)
+  y += 76
+
+  ctx.fillStyle = '#6b5f54'
+  ctx.font = '400 28px "Noto Serif SC", serif'
+  ctx.fillText(`本卦：第${result.number}卦`, padding, y)
+  if (result.changedEntry && result.changedNumber !== result.number) {
+    ctx.fillText(`变卦：第${result.changedNumber}卦 ${result.changedEntry.title}`, padding + 340, y)
+  }
+  y += 56
+
+  ctx.fillStyle = 'rgba(139, 74, 60, 0.12)'
+  drawRoundedRect(ctx, padding, y, contentW, 278, 26)
+  ctx.fill()
+
+  drawHexagramOnCanvas(ctx, result.lines, padding + 56, y + 42, 320, 16, 16)
+  ctx.fillStyle = '#5e5146'
+  ctx.font = '600 28px "Noto Serif SC", serif'
+  ctx.fillText('本卦卦象', padding + 426, y + 52)
+
+  if (result.changedEntry && result.lines.some((line) => line.changing)) {
+    drawHexagramOnCanvas(ctx, result.changedLines, padding + 426, y + 104, 320, 16, 16)
+    ctx.fillStyle = '#6b5f54'
+    ctx.font = '500 24px "Noto Serif SC", serif'
+    ctx.fillText('变卦卦象', padding + 426, y + 218)
+  }
+
+  y += 322
+
+  const drawSectionTitle = (title: string) => {
+    ctx.fillStyle = '#2f2722'
+    ctx.font = '700 34px "Noto Serif SC", serif'
+    ctx.fillText(title, padding, y)
+    y += 52
+  }
+
+  const drawParagraph = (text: string, size = 28, color = '#4d433a', gapAfter = 22) => {
+    ctx.fillStyle = color
+    ctx.font = `400 ${size}px "Noto Serif SC", serif`
+    const lineHeight = Math.round(size * 1.62)
+    const lines = wrapCanvasText(ctx, text.trim(), contentW)
+    for (const line of lines) {
+      if (line) ctx.fillText(line, padding, y)
+      y += line ? lineHeight : Math.round(lineHeight * 0.45)
+    }
+    y += gapAfter
+  }
+
+  drawSectionTitle('卦辞')
+  drawParagraph(result.entry?.guaCi ?? '暂无卦辞', 30, '#352d27', 26)
+
+  drawSectionTitle('爻辞')
+  result.entry?.yaoCi.forEach((text, index) => {
+    const line = result.lines[index]
+    const prefix = `${yaoLabel(index)}${line?.changing ? '（动）' : ''}`
+    drawParagraph(`${prefix}：${text}`, 27, line?.changing ? '#7e3f34' : '#4d433a', 12)
+  })
+  y += 8
+
+  drawSectionTitle('动爻说明')
+  const movingLines = result.lines
+    .map((line, index) => ({ line, index }))
+    .filter((item) => item.line.changing)
+
+  if (movingLines.length === 0) {
+    drawParagraph('本卦无动爻，为静卦。此时宜守正、稳步而行，以卦辞为核心指引。', 27, '#4d433a', 12)
+  } else {
+    movingLines.forEach(({ line, index }) => {
+      const changedState = line.yin ? '由阴变阳' : '由阳变阴'
+      const yaoCiText = result.entry?.yaoCi[index] ?? '暂无爻辞'
+      drawParagraph(`${yaoLabel(index)}：${changedState}。${yaoCiText}`, 27, '#4d433a', 12)
+    })
+  }
+  y += 10
+
+  drawSectionTitle('卦象解读')
+  if (interpretation.items.length) {
+    interpretation.items.forEach((item) => {
+      drawParagraph(`【${item.title}】`, 28, '#352d27', 8)
+      drawParagraph(item.content, 27, '#4d433a', 16)
+    })
+  } else {
+    drawParagraph(interpretation.plain || result.interpretation || '暂无解读', 27, '#4d433a', 14)
+  }
+
+  const qrSize = 118
+  const footerY = y + 24
+  ctx.strokeStyle = 'rgba(139, 74, 60, 0.2)'
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.moveTo(padding, footerY)
+  ctx.lineTo(w - padding, footerY)
+  ctx.stroke()
+
+  y = footerY + 34
+
+  ctx.fillStyle = '#665a4f'
+  ctx.font = '400 24px "Noto Serif SC", serif'
+  ctx.fillText('扫码进入「小庄问卦」，查看完整解读', padding, y + 24)
+
+  try {
+    const qrImage = await loadImage(SHARE_QR_PATH)
+    ctx.globalAlpha = 0.86
+    ctx.drawImage(qrImage, w - padding - qrSize, y, qrSize, qrSize)
+    ctx.globalAlpha = 1
+  } catch {
+    ctx.fillStyle = '#8f8071'
+    ctx.font = '400 20px "Noto Serif SC", serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(SHARE_DEST_URL, w - padding, y + 62)
+    ctx.textAlign = 'left'
+  }
+
+  y += qrSize + 34
+
+  const finalHeight = Math.max(1700, Math.min(SHARE_CARD_MAX_HEIGHT, y))
+  const output = document.createElement('canvas')
+  output.width = SHARE_CARD_WIDTH
+  output.height = finalHeight
+  const outputCtx = output.getContext('2d')
+  if (!outputCtx) throw new Error('分享图生成失败，请稍后再试。')
+  outputCtx.drawImage(canvas, 0, 0, SHARE_CARD_WIDTH, finalHeight, 0, 0, SHARE_CARD_WIDTH, finalHeight)
+
+  return await canvasToBlob(output, 0.92)
+}
+
 type HexagramCardProps = {
   heading: string
   entry: HexagramEntry | null
@@ -443,16 +716,50 @@ export default function GuaClient() {
   const [isCasting, setIsCasting] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
   const [revealResult, setRevealResult] = useState(false)
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false)
+  const [shareBlob, setShareBlob] = useState<Blob | null>(null)
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
+  const [isShareOpen, setIsShareOpen] = useState(false)
   const castIdRef = useRef(0)
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasResult = Boolean(result?.entry)
+
+  useEffect(() => {
+    return () => {
+      if (shareImageUrl) URL.revokeObjectURL(shareImageUrl)
+    }
+  }, [shareImageUrl])
+
+  useEffect(() => {
+    if (!isShareOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsShareOpen(false)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isShareOpen])
+
+  const resetShareCard = () => {
+    if (shareImageUrl) URL.revokeObjectURL(shareImageUrl)
+    setShareImageUrl(null)
+    setShareBlob(null)
+    setIsShareOpen(false)
+  }
 
   const resetCast = () => {
     if (revealTimerRef.current) {
       clearTimeout(revealTimerRef.current)
       revealTimerRef.current = null
     }
+    resetShareCard()
     setIsCasting(false)
     setRevealResult(false)
     setResult(null)
@@ -466,6 +773,7 @@ export default function GuaClient() {
     }
     castIdRef.current += 1
     const castId = castIdRef.current
+    resetShareCard()
     const lines = Array.from({ length: 6 }, () => tossLine())
     const changedLines = lines.map((line) =>
       line.changing
@@ -574,6 +882,34 @@ export default function GuaClient() {
     ? parseInterpretation(result.interpretation)
     : { items: [], plain: '' }
 
+  const buildShareCard = async () => {
+    if (!result || !result.entry) return null
+    setIsGeneratingShare(true)
+    try {
+      const parsed = parseInterpretation(result.interpretation)
+      const blob = await generateGuaShareCard(result, parsed)
+      const url = URL.createObjectURL(blob)
+      if (shareImageUrl) URL.revokeObjectURL(shareImageUrl)
+      setShareBlob(blob)
+      setShareImageUrl(url)
+      return blob
+    } catch {
+      return null
+    } finally {
+      setIsGeneratingShare(false)
+    }
+  }
+
+  const handleOpenShare = async () => {
+    const blob = shareBlob ?? (await buildShareCard())
+    if (!blob) return
+    setIsShareOpen(true)
+  }
+
+  const handleCloseShare = () => {
+    setIsShareOpen(false)
+  }
+
   return (
     <div className="app gua-app">
       <header className="hero gua-hero">
@@ -661,6 +997,41 @@ export default function GuaClient() {
               >
                 {isRetrying ? '重新解读中...' : '重新解读'}
               </button>
+            ) : null}
+
+            <button
+              type="button"
+              className="gua-share-icon-button gua-share-icon-button-floating"
+              onClick={handleOpenShare}
+              disabled={isGeneratingShare || !result?.entry}
+              aria-label="生成卦象长图"
+              title="生成分享长图"
+            >
+              <svg viewBox="0 0 18 18" aria-hidden="true">
+                <path d={SHARE_ICON_PATH} />
+              </svg>
+            </button>
+
+            {isShareOpen && shareImageUrl ? (
+              <div
+                className="gua-share-sheet"
+                role="dialog"
+                aria-modal="true"
+                aria-label="卦象分享图片预览"
+                onClick={handleCloseShare}
+              >
+                <div className="gua-share-sheet-card" onClick={(event) => event.stopPropagation()}>
+                  <div className="gua-share-sheet-header">
+                    <p className="gua-share-sheet-title">卦象长图（可保存后分享）</p>
+                    <button type="button" className="gua-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
+                      ×
+                    </button>
+                  </div>
+                  <div className="gua-share-sheet-preview">
+                    <img src={shareImageUrl} alt="卦象分享长图预览" className="gua-share-sheet-image" />
+                  </div>
+                </div>
+              </div>
             ) : null}
           </section>
         </>

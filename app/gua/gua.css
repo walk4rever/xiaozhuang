@@ -286,6 +286,110 @@
   color: var(--ink-2);
 }
 
+.guidance-panel {
+  position: relative;
+}
+
+.gua-share-icon-button {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 74, 60, 0.24);
+  background: rgba(255, 255, 255, 0.9);
+  color: #8b4a3c;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gua-share-icon-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(139, 74, 60, 0.36);
+  box-shadow: 0 12px 24px rgba(74, 66, 56, 0.14);
+}
+
+.gua-share-icon-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.gua-share-icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.gua-share-icon-button-floating {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 2;
+}
+
+.gua-share-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(36, 31, 27, 0.36);
+  backdrop-filter: blur(8px);
+}
+
+.gua-share-sheet-card {
+  width: min(92vw, 560px);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  border-radius: 26px;
+  padding: 1rem;
+  background: var(--paper-panel);
+  border: 1px solid var(--line-soft);
+  box-shadow: 0 24px 60px rgba(36, 31, 27, 0.2);
+}
+
+.gua-share-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.gua-share-sheet-title {
+  margin: 0;
+  color: var(--ink-0);
+  font-size: 0.96rem;
+  letter-spacing: 0.08rem;
+}
+
+.gua-share-close {
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-1);
+  cursor: pointer;
+  font-size: 1.12rem;
+  line-height: 1;
+}
+
+.gua-share-sheet-preview {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid var(--line-soft);
+}
+
+.gua-share-sheet-image {
+  width: 100%;
+  display: block;
+}
+
 @media (max-width: 960px) {
   .result-body {
     grid-template-columns: 1fr;
@@ -353,5 +457,19 @@
   .casting-content {
     flex-direction: column;
     gap: 0.9rem;
+  }
+
+  .gua-share-icon-button-floating {
+    right: 0.85rem;
+    bottom: 0.85rem;
+  }
+
+  .gua-share-sheet-card {
+    padding: 0.8rem;
+  }
+
+  .gua-share-sheet-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
