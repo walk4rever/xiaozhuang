@@ -510,6 +510,11 @@ const drawHexagramOnCanvas = (
   })
 }
 
+const formatShareTimestamp = (date: Date) => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
   const canvas = document.createElement('canvas')
   canvas.width = SHARE_CARD_WIDTH
@@ -655,7 +660,7 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   ctx.fillStyle = '#665a4f'
   ctx.font = '400 24px "Noto Serif SC", serif'
-  ctx.fillText('扫码进入「小庄问卦」，查看完整解读', padding, y + 24)
+  ctx.fillText(`生成时间：${formatShareTimestamp(new Date())}`, padding, y + 24)
 
   try {
     const qrImage = await loadImage(SHARE_QR_PATH)
