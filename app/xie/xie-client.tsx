@@ -5,8 +5,6 @@ import Link from 'next/link'
 import {
   buildXieYangmingUserPrompt,
   XIE_YANGMING_SYSTEM_PROMPT,
-  type XieLength,
-  type XieTone,
 } from '@/data/xie-yangming'
 
 type XieOutput = {
@@ -20,9 +18,6 @@ type XieOutput = {
     readabilityPass?: boolean
   }
 }
-
-const toneOptions: XieTone[] = ['克己', '定心', '进取', '豁达']
-const lengthOptions: XieLength[] = ['四句', '六句']
 
 const extractJsonBlock = (text: string) => {
   const trimmed = text.trim()
@@ -49,15 +44,11 @@ const parseXieOutput = (raw: string): XieOutput | null => {
 const requestXie = async (
   intent: string,
   context: string,
-  tone: XieTone,
-  length: XieLength,
   onChunk?: (text: string) => void
 ) => {
   const userPrompt = buildXieYangmingUserPrompt({
     intent,
     context,
-    tone,
-    length,
   })
 
   const response = await fetch('/api/llm', {
@@ -99,8 +90,6 @@ const requestXie = async (
 export default function XieClient() {
   const [intent, setIntent] = useState('')
   const [context, setContext] = useState('')
-  const [tone, setTone] = useState<XieTone>('定心')
-  const [length, setLength] = useState<XieLength>('四句')
   const [rawOutput, setRawOutput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -114,7 +103,7 @@ export default function XieClient() {
     setRawOutput('')
 
     try {
-      const final = await requestXie(intent.trim(), context.trim(), tone, length, (partial) => {
+      const final = await requestXie(intent.trim(), context.trim(), (partial) => {
         setRawOutput(partial)
       })
       setRawOutput(final)
@@ -136,7 +125,7 @@ export default function XieClient() {
           <p className="subtitle">立诚 · 明心 · 见行</p>
           <h1>仿写</h1>
           <p className="description">
-            以王阳明文风为骨，严格生成四六章句。把现代心事写成文哲具佳的短章。
+            以王阳明文风为骨，生成四字六字错落有致的自然章句。把现代心事写成文哲具佳的短章。
           </p>
         </div>
       </header>
@@ -159,40 +148,6 @@ export default function XieClient() {
           value={context}
           onChange={(event) => setContext(event.target.value)}
         />
-
-        <div className="xie-controls">
-          <div>
-            <p className="xie-control-title">语气</p>
-            <div className="xie-chip-group">
-              {toneOptions.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`xie-chip ${tone === item ? 'active' : ''}`}
-                  onClick={() => setTone(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="xie-control-title">篇幅</p>
-            <div className="xie-chip-group">
-              {lengthOptions.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`xie-chip ${length === item ? 'active' : ''}`}
-                  onClick={() => setLength(item)}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
         <button className="xie-submit" onClick={handleSubmit} disabled={isLoading || !intent.trim()}>
           {isLoading ? '仿写中…' : '生成王阳明式章句'}

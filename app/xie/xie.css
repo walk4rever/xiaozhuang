@@ -69,40 +69,6 @@
   min-height: 84px;
 }
 
-.xie-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.xie-control-title {
-  margin: 0 0 0.5rem;
-  color: var(--ink-1);
-  font-size: 0.88rem;
-}
-
-.xie-chip-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.xie-chip {
-  border: 1px solid rgba(139, 74, 60, 0.22);
-  background: rgba(255, 255, 255, 0.82);
-  color: #6f554d;
-  border-radius: 999px;
-  padding: 0.35rem 0.75rem;
-  cursor: pointer;
-}
-
-.xie-chip.active {
-  background: rgba(139, 74, 60, 0.14);
-  border-color: rgba(139, 74, 60, 0.42);
-  color: #8b4a3c;
-}
-
 .xie-submit {
   width: 100%;
   padding: 0.92rem 1rem;
@@ -138,8 +104,3 @@
   color: #8b4a3c;
 }
 
-@media (max-width: 560px) {
-  .xie-controls {
-    grid-template-columns: 1fr;
-  }
-}
