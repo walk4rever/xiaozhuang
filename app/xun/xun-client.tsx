@@ -573,6 +573,7 @@ export default function XunClient() {
   const [image, setImage] = useState<ImageAsset | null>(null)
   const [shareBlob, setShareBlob] = useState<Blob | null>(null)
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
+  const [isShareOpen, setIsShareOpen] = useState(false)
   const requestIdRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -591,6 +592,7 @@ export default function XunClient() {
     if (shareImageUrl) URL.revokeObjectURL(shareImageUrl)
     setShareImageUrl(null)
     setShareBlob(null)
+    setIsShareOpen(false)
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -660,31 +662,20 @@ export default function XunClient() {
     }
   }
 
-  const handleSystemShare = async () => {
+  const handleOpenShare = async () => {
     const blob = shareBlob ?? (await buildShareCard())
     if (!blob) return
+    setIsShareOpen(true)
+  }
 
-    try {
-      const file = new File([blob], 'xiaozhuang-share.jpg', { type: 'image/jpeg' })
-      if (
-        typeof navigator !== 'undefined' &&
-        'share' in navigator &&
-        typeof navigator.share === 'function' &&
-        (!('canShare' in navigator) || navigator.canShare?.({ files: [file] }))
-      ) {
-        await navigator.share({
-          title: '小庄 · 寻句',
-          text: parsed ? `${parsed.quote} —— ${parsed.source}` : '小庄 · 寻句',
-          files: [file],
-        })
-        return
-      }
-      downloadBlob(blob, 'xiaozhuang-share.jpg')
-    } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return
-      setError('系统分享暂不可用，已为你准备好分享图，请直接保存。')
-      downloadBlob(blob, 'xiaozhuang-share.jpg')
-    }
+  const handleSaveShareImage = async () => {
+    const blob = shareBlob ?? (await buildShareCard())
+    if (!blob) return
+    downloadBlob(blob, 'xiaozhuang-share.jpg')
+  }
+
+  const handleCloseShare = () => {
+    setIsShareOpen(false)
   }
 
   return (
@@ -787,18 +778,6 @@ export default function XunClient() {
         <section className="panel xun-result">
           <div className="xun-result-toolbar">
             <span className="xun-result-tag">{image ? '看图寻句' : '文字寻句'}</span>
-            <button
-              type="button"
-              className="xun-share-icon-button"
-              onClick={handleSystemShare}
-              disabled={isGeneratingShare}
-              aria-label="分享这条寻句结果"
-              title="分享"
-            >
-              <svg viewBox="0 0 18 18" aria-hidden="true">
-                <path d={SHARE_ICON_PATH} />
-              </svg>
-            </button>
           </div>
           <div className="xun-quote-block">
             <p className="quote-text">{parsed.quote}</p>
@@ -813,6 +792,45 @@ export default function XunClient() {
             <p>{parsed.resonance}</p>
           </div>
 
+          <button
+            type="button"
+            className="xun-share-icon-button xun-share-icon-button-floating"
+            onClick={handleOpenShare}
+            disabled={isGeneratingShare}
+            aria-label="生成高质量分享图片"
+            title="生成分享图片"
+          >
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d={SHARE_ICON_PATH} />
+            </svg>
+          </button>
+
+          {isShareOpen && shareImageUrl ? (
+            <div className="xun-share-sheet" role="dialog" aria-modal="true" aria-label="分享图片预览">
+              <div className="xun-share-sheet-card">
+                <div className="xun-share-sheet-header">
+                  <div>
+                    <h4>生成好的图片</h4>
+                    <p>可直接保存，用于朋友圈或相册分享。</p>
+                  </div>
+                  <button type="button" className="xun-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
+                    ×
+                  </button>
+                </div>
+                <div className="xun-share-sheet-preview">
+                  <img src={shareImageUrl} alt="高质量分享图片预览" className="xun-share-sheet-image" />
+                </div>
+                <div className="xun-share-sheet-actions">
+                  <button type="button" className="xun-secondary-button xun-secondary-button-accent" onClick={handleSaveShareImage}>
+                    保存图片
+                  </button>
+                  <button type="button" className="xun-secondary-button" onClick={handleCloseShare}>
+                    关闭
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
       )}
     </div>
