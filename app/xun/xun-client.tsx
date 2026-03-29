@@ -704,7 +704,6 @@ export default function XunClient() {
             className="xun-file-input"
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleFileChange}
           />
         </div>
