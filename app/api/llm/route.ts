@@ -16,6 +16,8 @@ const jsonResponse = (body: Record<string, string>, status: number) =>
 
 const encoder = new TextEncoder()
 const UPSTREAM_TIMEOUT_MS = 25000
+const UPSTREAM_STREAMING_TIMEOUT_MS = 50000
+const UPSTREAM_VISION_STREAMING_TIMEOUT_MS = 55000
 const UPSTREAM_RETRY_DELAY_MS = 600
 const isJsonResponse = (contentType: string | null) =>
   (contentType ?? '').toLowerCase().includes('application/json')
@@ -191,6 +193,10 @@ export async function POST(request: Request) {
           let response: Response | null = null
 
           try {
+            const streamingTimeoutMs = hasVisionInput
+              ? UPSTREAM_VISION_STREAMING_TIMEOUT_MS
+              : UPSTREAM_STREAMING_TIMEOUT_MS
+
             for (let attempt = 1; attempt <= 2; attempt += 1) {
               try {
                 response = await fetch(baseUrl, {
@@ -200,6 +206,7 @@ export async function POST(request: Request) {
                     Authorization: `Bearer ${apiKey}`,
                   },
                   body: JSON.stringify(upstreamPayload),
+                  signal: AbortSignal.timeout(streamingTimeoutMs),
                 })
                 break
               } catch (error) {
