@@ -734,7 +734,9 @@ export default function XunClient() {
 
         {image ? (
           <div className="xun-image-preview-wrap">
-            <img src={image.dataUrl} alt="待寻句照片" className="xun-image-preview" />
+            <div className="xun-image-preview-stage">
+              <img src={image.dataUrl} alt="待寻句照片" className="xun-image-preview" />
+            </div>
             <div className="xun-image-meta">
               <span>
                 已预处理 · JPEG · {image.width}×{image.height} · {(image.sizeBytes / 1024 / 1024).toFixed(2)} MB
@@ -832,10 +834,7 @@ export default function XunClient() {
             >
               <div className="xun-share-sheet-card" onClick={(event) => event.stopPropagation()}>
                 <div className="xun-share-sheet-header">
-                  <div>
-                    <h4>生成好的图片</h4>
-                    <p>可直接保存，用于朋友圈或相册分享。</p>
-                  </div>
+                  <p className="xun-share-sheet-title">可分享图片</p>
                   <button type="button" className="xun-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
                     ×
                   </button>
@@ -843,6 +842,7 @@ export default function XunClient() {
                 <div className="xun-share-sheet-preview">
                   <img src={shareImageUrl} alt="高质量分享图片预览" className="xun-share-sheet-image" />
                 </div>
+                <p className="xun-share-sheet-caption">保存后即可发到朋友圈或留作此刻纪念。</p>
                 <div className="xun-share-sheet-actions">
                   <button type="button" className="xun-secondary-button xun-secondary-button-accent" onClick={handleSaveShareImage}>
                     保存图片
