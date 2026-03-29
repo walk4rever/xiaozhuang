@@ -283,162 +283,136 @@ const generateShareCard = async (
   const w = canvas.width
   const h = canvas.height
   const usePhotoTemplate = template === 'photo' && Boolean(image)
+  const margin = 80
 
+  // Background
   const bg = ctx.createLinearGradient(0, 0, 0, h)
-  bg.addColorStop(0, '#faf6ef')
-  bg.addColorStop(0.55, '#f3ede4')
-  bg.addColorStop(1, '#ebe4d8')
+  bg.addColorStop(0, '#f9f4ec')
+  bg.addColorStop(0.6, '#f2ebe0')
+  bg.addColorStop(1, '#ece3d4')
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, w, h)
 
-  const paperGlow = ctx.createRadialGradient(w * 0.18, h * 0.1, 10, w * 0.18, h * 0.1, 340)
-  paperGlow.addColorStop(0, 'rgba(255,255,255,0.92)')
-  paperGlow.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = paperGlow
-  ctx.fillRect(0, 0, w, h)
-
-  ctx.fillStyle = 'rgba(95, 124, 119, 0.06)'
-  ctx.beginPath()
-  ctx.ellipse(w * 0.14, h * 0.82, 250, 108, -0.06, 0, Math.PI * 2)
-  ctx.ellipse(w * 0.46, h * 0.86, 320, 104, 0.02, 0, Math.PI * 2)
-  ctx.ellipse(w * 0.8, h * 0.83, 270, 96, 0.09, 0, Math.PI * 2)
-  ctx.fill()
-
-  drawRoundedRect(ctx, 52, 52, w - 104, h - 104, 44)
-  ctx.fillStyle = 'rgba(252, 249, 244, 0.62)'
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(122, 104, 86, 0.1)'
-  ctx.lineWidth = 2
-  ctx.stroke()
-
-  let currentY = usePhotoTemplate ? 72 : 92
+  ctx.textBaseline = 'top'
+  let y = 0
 
   if (usePhotoTemplate && image) {
+    // Photo: full-width, cover-crop, fades into background at bottom
     const photo = await loadImage(image.dataUrl)
-    const frameX = 72
-    const frameY = currentY
-    const frameW = w - 144
-    const frameH = 640
-
-    ctx.fillStyle = 'rgba(255,255,255,0.82)'
-    drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
-    ctx.fill()
+    const photoH = 560
 
     ctx.save()
-    drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
+    ctx.beginPath()
+    ctx.rect(0, 0, w, photoH)
     ctx.clip()
 
-    const scale = Math.min(frameW / photo.width, frameH / photo.height)
+    const scale = Math.max(w / photo.width, photoH / photo.height)
     const drawW = photo.width * scale
     const drawH = photo.height * scale
-    const drawX = frameX + (frameW - drawW) / 2
-    const drawY = frameY + (frameH - drawH) / 2
+    ctx.drawImage(photo, (w - drawW) / 2, (photoH - drawH) / 2, drawW, drawH)
 
-    ctx.fillStyle = '#f5f0e7'
-    ctx.fillRect(frameX, frameY, frameW, frameH)
-    ctx.drawImage(photo, drawX, drawY, drawW, drawH)
+    // Gradient fade photo bottom into background
+    const fade = ctx.createLinearGradient(0, photoH - 160, 0, photoH)
+    fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
+    fade.addColorStop(1, 'rgba(242, 235, 224, 1)')
+    ctx.fillStyle = fade
+    ctx.fillRect(0, 0, w, photoH)
     ctx.restore()
 
-    ctx.strokeStyle = 'rgba(122, 104, 86, 0.14)'
-    ctx.lineWidth = 2
-    drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
-    ctx.stroke()
-
-    currentY = frameY + frameH + 42
+    y = photoH + 64
+  } else {
+    // Subtle warm glow for quote-only template
+    const glow = ctx.createRadialGradient(w * 0.2, h * 0.28, 20, w * 0.2, h * 0.28, 520)
+    glow.addColorStop(0, 'rgba(255,255,255,0.4)')
+    glow.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = glow
+    ctx.fillRect(0, 0, w, h)
+    y = 0
   }
 
-  const textCardX = 72
-  const textCardY = currentY
-  const textCardW = w - 144
-  const textCardH = usePhotoTemplate ? 470 : 900
+  // Typography constants
+  const quoteFontSize = usePhotoTemplate ? 42 : 52
+  const quoteLineH = quoteFontSize + 24
+  const sourceFontSize = 26
+  const interpretFontSize = usePhotoTemplate ? 25 : 27
+  const interpretLineH = interpretFontSize + 18
 
-  drawRoundedRect(ctx, textCardX, textCardY, textCardW, textCardH, 32)
-  ctx.fillStyle = 'rgba(255, 252, 247, 0.84)'
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(122, 104, 86, 0.14)'
-  ctx.lineWidth = 1.5
-  ctx.stroke()
-
-  if (!usePhotoTemplate) {
-    const innerMist = ctx.createRadialGradient(textCardX + 140, textCardY + 120, 10, textCardX + 140, textCardY + 120, 220)
-    innerMist.addColorStop(0, 'rgba(255,255,255,0.7)')
-    innerMist.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = innerMist
-    drawRoundedRect(ctx, textCardX, textCardY, textCardW, textCardH, 32)
-    ctx.fill()
-
-    ctx.fillStyle = 'rgba(95, 124, 119, 0.08)'
-    ctx.beginPath()
-    ctx.ellipse(textCardX + 170, textCardY + textCardH - 88, 140, 54, -0.05, 0, Math.PI * 2)
-    ctx.ellipse(textCardX + 420, textCardY + textCardH - 72, 190, 60, 0.02, 0, Math.PI * 2)
-    ctx.ellipse(textCardX + 710, textCardY + textCardH - 90, 150, 56, 0.08, 0, Math.PI * 2)
-    ctx.fill()
-  }
-
-  const quoteFontSize = usePhotoTemplate ? 40 : 48
-  const quoteLineHeight = 80
-  const interpretLineHeight = usePhotoTemplate ? 42 : 46
-  const sourceLineHeight = 58
-  const sourceGap = 18
-
-  // Pre-calculate line wrapping so we can vertically centre the whole block
+  // Pre-calculate wrapping
   ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
-  const quoteLines = wrapText(ctx, result.quote, textCardW - 112, usePhotoTemplate ? 4 : 6)
+  const quoteLines = wrapText(ctx, result.quote, w - margin * 2, usePhotoTemplate ? 4 : 5)
 
-  ctx.font = usePhotoTemplate ? '400 27px "Noto Serif SC", serif' : '400 29px "Noto Serif SC", serif'
-  const interpretationLines = wrapText(ctx, result.interpretation.trim().replace(/\n+/g, ' '), textCardW - 250, usePhotoTemplate ? 5 : 10)
+  ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
+  const interpretLines = wrapText(
+    ctx,
+    result.interpretation.trim().replace(/\n+/g, ' '),
+    w - margin * 2,
+    usePhotoTemplate ? 5 : 8
+  )
 
-  const totalContentHeight =
-    quoteLines.length * quoteLineHeight +
-    sourceGap +
-    sourceLineHeight +
-    interpretationLines.length * interpretLineHeight
+  // Quote-only: vertically centre block in top 62% of card
+  if (!usePhotoTemplate) {
+    const blockH =
+      quoteLines.length * quoteLineH +
+      32 + sourceFontSize +
+      80 +
+      interpretLines.length * interpretLineH
+    y = Math.max(140, (h * 0.62 - blockH) / 2)
+  }
 
-  const minPadding = 48
-  ctx.textBaseline = 'top'
-  let contentY = textCardY + Math.max(minPadding, (textCardH - totalContentHeight) / 2)
-
-  ctx.fillStyle = '#241f1b'
+  // Quote
+  ctx.fillStyle = '#1c1714'
   ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
-    ctx.fillText(line, textCardX + 56, contentY)
-    contentY += quoteLineHeight
+    ctx.fillText(line, margin, y)
+    y += quoteLineH
   }
 
-  contentY += sourceGap
+  y += 32
 
-  ctx.fillStyle = '#746d64'
-  ctx.font = '400 28px "Noto Serif SC", serif'
-  ctx.fillText(`—— ${result.source}`, textCardX + 56, contentY)
-  contentY += sourceLineHeight
+  // Source
+  ctx.fillStyle = '#96836e'
+  ctx.font = `400 ${sourceFontSize}px "Noto Serif SC", serif`
+  ctx.fillText(`—— ${result.source}`, margin, y)
+  y += sourceFontSize + 56
 
-  ctx.fillStyle = '#4f4842'
-  ctx.font = usePhotoTemplate ? '400 27px "Noto Serif SC", serif' : '400 29px "Noto Serif SC", serif'
-  for (const line of interpretationLines) {
-    ctx.fillText(line, textCardX + 56, contentY)
-    contentY += interpretLineHeight
+  // Thin divider line
+  ctx.strokeStyle = 'rgba(148, 122, 88, 0.28)'
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.moveTo(margin, y)
+  ctx.lineTo(margin + 160, y)
+  ctx.stroke()
+
+  y += 48
+
+  // Interpretation
+  ctx.fillStyle = '#5c5044'
+  ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
+  for (const line of interpretLines) {
+    ctx.fillText(line, margin, y)
+    y += interpretLineH
+  }
+
+  // QR: no box, just semi-transparent
+  try {
+    const qrSize = 96
+    const qrImage = await loadImage(SHARE_QR_PATH)
+    ctx.globalAlpha = 0.45
+    ctx.drawImage(qrImage, w - margin - qrSize, h - margin - qrSize, qrSize, qrSize)
+    ctx.globalAlpha = 1
+  } catch {
+    ctx.fillStyle = '#a0907e'
+    ctx.font = '400 18px "Noto Serif SC", serif'
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText(SHARE_DEST_URL, w - margin, h - margin)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
   }
 
   ctx.textBaseline = 'alphabetic'
 
-  try {
-    const qrImage = await loadImage(SHARE_QR_PATH)
-    const qrSize = 126
-    const qrX = w - 72 - qrSize
-    const qrY = h - 72 - qrSize
-    ctx.fillStyle = 'rgba(255,255,255,0.92)'
-    drawRoundedRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 20)
-    ctx.fill()
-    ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
-  } catch {
-    ctx.fillStyle = '#8d7761'
-    ctx.font = '400 18px "Noto Serif SC", serif'
-    ctx.textAlign = 'right'
-    ctx.fillText(SHARE_DEST_URL, w - 72, h - 88)
-  }
-
-  const blob = await canvasToBlob(canvas, 0.92)
-  return blob
+  return await canvasToBlob(canvas, 0.92)
 }
 
 const downloadBlob = (blob: Blob, filename: string) => {
