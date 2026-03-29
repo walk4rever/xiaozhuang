@@ -47,7 +47,7 @@ const SYSTEM_PROMPT = `你是"小庄"，一位深谙中国古典诗词与古文�
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024
-const MAX_IMAGE_EDGE = 1600
+const MAX_IMAGE_EDGE = 1280
 const MIN_IMAGE_EDGE = 14
 const INITIAL_JPEG_QUALITY = 0.88
 const MIN_JPEG_QUALITY = 0.56
@@ -350,7 +350,7 @@ const generateShareCard = async (
   const textCardX = 72
   const textCardY = currentY
   const textCardW = w - 144
-  const textCardH = usePhotoTemplate ? 540 : 980
+  const textCardH = usePhotoTemplate ? 470 : 900
 
   drawRoundedRect(ctx, textCardX, textCardY, textCardW, textCardH, 32)
   ctx.fillStyle = 'rgba(255, 252, 247, 0.84)'
@@ -376,9 +376,9 @@ const generateShareCard = async (
   }
 
   ctx.fillStyle = '#241f1b'
-  ctx.font = usePhotoTemplate ? '700 58px "Noto Serif SC", serif' : '700 66px "Noto Serif SC", serif'
-  const quoteLines = wrapText(ctx, result.quote, textCardW - 112, usePhotoTemplate ? 4 : 7)
-  let quoteY = textCardY + (usePhotoTemplate ? 58 : 88)
+  ctx.font = usePhotoTemplate ? '700 50px "Noto Serif SC", serif' : '700 60px "Noto Serif SC", serif'
+  const quoteLines = wrapText(ctx, result.quote, textCardW - 112, usePhotoTemplate ? 4 : 6)
+  let quoteY = textCardY + (usePhotoTemplate ? 52 : 82)
   for (const line of quoteLines) {
     ctx.fillText(line, textCardX + 56, quoteY)
     quoteY += 80
@@ -389,15 +389,14 @@ const generateShareCard = async (
   ctx.fillStyle = '#746d64'
   ctx.font = '400 28px "Noto Serif SC", serif'
   ctx.fillText(`—— ${result.source}`, textCardX + 56, quoteY)
-  quoteY += 72
+  quoteY += 58
 
   ctx.fillStyle = '#4f4842'
-  ctx.font = usePhotoTemplate ? '400 28px "Noto Serif SC", serif' : '400 30px "Noto Serif SC", serif'
-  const mergedText = `${result.interpretation.trim()}\n\n${result.resonance.trim()}`
-  const mergedLines = wrapText(ctx, mergedText.replace(/\n+/g, ' '), textCardW - 112, usePhotoTemplate ? 7 : 12)
-  for (const line of mergedLines) {
+  ctx.font = usePhotoTemplate ? '400 27px "Noto Serif SC", serif' : '400 29px "Noto Serif SC", serif'
+  const interpretationLines = wrapText(ctx, result.interpretation.trim().replace(/\n+/g, ' '), textCardW - 250, usePhotoTemplate ? 5 : 10)
+  for (const line of interpretationLines) {
     ctx.fillText(line, textCardX + 56, quoteY)
-    quoteY += usePhotoTemplate ? 44 : 48
+    quoteY += usePhotoTemplate ? 42 : 46
   }
 
   try {
@@ -469,7 +468,7 @@ async function requestXun(
         userMessage,
       ],
       temperature: 0.8,
-      max_tokens: 768,
+      max_tokens: 640,
       stream: true,
     }),
   })
@@ -751,7 +750,7 @@ export default function XunClient() {
             ? '图片处理中…'
             : isLoading
               ? image
-                ? '看图寻句中…'
+                ? '正在看图，为你寻句…'
                 : '寻句中…'
               : image
                 ? '为这张照片找一句'
@@ -767,7 +766,7 @@ export default function XunClient() {
 
       {isStreaming && !parsed && (
         <section className="panel xun-result">
-          <p className="xun-streaming">{image ? '小庄正在看图寻句……' : '寻句中，古人正在翻书……'}</p>
+          <p className="xun-streaming">{image ? '先看图，再为你落一句贴切的话……' : '寻句中，古人正在翻书……'}</p>
         </section>
       )}
 
