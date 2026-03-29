@@ -78,61 +78,6 @@ const parseResult = (text: string): ParsedResult | null => {
   }
 }
 
-type SseEvent =
-  | { type: 'delta'; content: string }
-  | { type: 'done' }
-  | { type: 'error'; message: string }
-
-const parseSseLine = (line: string): string | null => {
-  if (!line.startsWith('data:')) return null
-  const data = line.slice(5).trim()
-  if (!data || data === '[DONE]') return null
-  try {
-    const parsed = JSON.parse(data) as {
-      choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>
-    }
-    return parsed.choices?.[0]?.delta?.content ?? parsed.choices?.[0]?.message?.content ?? null
-  } catch {
-    return null
-  }
-}
-
-const parseStreamEvent = (eventName: string, data: string): SseEvent | null => {
-  if (!data) return null
-  if (eventName === 'delta') {
-    try {
-      const content = JSON.parse(data) as string
-      return typeof content === 'string' ? { type: 'delta', content } : null
-    } catch {
-      return null
-    }
-  }
-  if (eventName === 'done') return { type: 'done' }
-  if (eventName === 'error') {
-    try {
-      const payload = JSON.parse(data) as { error?: string }
-      return { type: 'error', message: payload.error ?? 'stream_error' }
-    } catch {
-      return { type: 'error', message: 'stream_error' }
-    }
-  }
-  return null
-}
-
-const readErrorMessage = async (response: Response) => {
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    try {
-      const payload = (await response.json()) as { error?: string; message?: string }
-      return payload.error ?? payload.message ?? `${response.status} 请求失败`
-    } catch {
-      return `${response.status} 请求失败`
-    }
-  }
-
-  const text = await response.text()
-  return text.trim() || `${response.status} 请求失败`
-}
 
 const fileToDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -423,108 +368,50 @@ async function requestXun(
   image: ImageAsset | null,
   onChunk?: (text: string) => void
 ): Promise<string> {
-  const hasImage = Boolean(image)
   const userText = input.trim()
-  const imageInstruction = hasImage
+  const imageInstruction = image
     ? userText
       ? `请先看这张照片，再结合我的补充感受来寻句：${userText}`
       : '请先认真看这张照片的场景、氛围与情绪，再为它寻一句最贴切的古典诗文。'
     : userText
 
-  const userMessage = hasImage
+  const userMessage = image
     ? {
         role: 'user' as const,
         content: [
           { type: 'text' as const, text: imageInstruction },
-          {
-            type: 'image_url' as const,
-            image_url: {
-              url: image!.dataUrl,
-            },
-          },
+          { type: 'image_url' as const, image_url: { url: image.dataUrl } },
         ],
       }
-    : {
-        role: 'user' as const,
-        content: userText,
-      }
+    : { role: 'user' as const, content: userText }
 
   const response = await fetch('/api/llm', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        userMessage,
-      ],
+      messages: [{ role: 'system', content: SYSTEM_PROMPT }, userMessage],
       temperature: 0.8,
       max_tokens: 640,
-      stream: true,
     }),
   })
 
   if (!response.ok) {
-    const errorMessage = await readErrorMessage(response)
-    throw new Error(errorMessage)
+    const payload = await response.json().catch(() => ({})) as { error?: string }
+    throw new Error(payload.error ?? `${response.status} 请求失败`)
   }
 
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    const payload = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const content = payload.choices?.[0]?.message?.content ?? ''
-    onChunk?.(content)
-    return content
-  }
+  if (!response.body) throw new Error('stream_unavailable')
 
-  const reader = response.body?.getReader()
-  if (!reader) throw new Error('stream_unavailable')
-
-  const decoder = new TextDecoder('utf-8')
-  let buffer = ''
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
   let content = ''
-  let currentEvent = ''
 
   while (true) {
-    const { value, done } = await reader.read()
-    if (value) {
-      buffer += decoder.decode(value, { stream: !done })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const rawLine of lines) {
-        const line = rawLine.trim()
-        if (!line) {
-          currentEvent = ''
-          continue
-        }
-        if (line.startsWith('event:')) {
-          currentEvent = line.slice(6).trim()
-          continue
-        }
-        if (line.startsWith('data:')) {
-          if (!currentEvent) {
-            const delta = parseSseLine(line)
-            if (delta) {
-              content += delta
-              onChunk?.(content)
-            }
-            continue
-          }
-          const evt = parseStreamEvent(currentEvent, line.slice(5).trim())
-          if (!evt) continue
-          if (evt.type === 'delta') {
-            content += evt.content
-            onChunk?.(content)
-          } else if (evt.type === 'error') {
-            throw new Error(evt.message)
-          } else if (evt.type === 'done') {
-            return content
-          }
-        }
-      }
-    }
+    const { done, value } = await reader.read()
     if (done) break
+    const chunk = decoder.decode(value, { stream: true })
+    content += chunk
+    onChunk?.(content)
   }
 
   return content

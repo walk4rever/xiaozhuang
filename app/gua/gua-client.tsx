@@ -315,85 +315,6 @@ const parseInterpretation = (text: string): ParsedInterpretation => {
   return parseMarkdownInterpretation(text)
 }
 
-const parseSseLine = (line: string): string | null => {
-  if (!line.startsWith('data:')) return null
-  const data = line.slice(5).trim()
-  if (!data || data === '[DONE]') return null
-  try {
-    const parsed = JSON.parse(data) as {
-      choices?: Array<{ delta?: { content?: string }; message?: { content?: string } }>
-    }
-    return parsed.choices?.[0]?.delta?.content ?? parsed.choices?.[0]?.message?.content ?? null
-  } catch {
-    return null
-  }
-}
-
-type ParsedStreamEvent =
-  | { type: 'delta'; content: string }
-  | { type: 'done' }
-  | { type: 'error'; message: string }
-
-const parseStreamEvent = (
-  eventName: string,
-  data: string
-): ParsedStreamEvent | null => {
-  if (!data) return null
-  if (eventName === 'delta') {
-    try {
-      const content = JSON.parse(data) as string
-      return typeof content === 'string' ? { type: 'delta', content } : null
-    } catch {
-      return null
-    }
-  }
-  if (eventName === 'done') {
-    return { type: 'done' }
-  }
-  if (eventName === 'error') {
-    try {
-      const payload = JSON.parse(data) as { error?: string }
-      return {
-        type: 'error',
-        message: payload.error ?? 'stream_error',
-      }
-    } catch {
-      return { type: 'error', message: 'stream_error' }
-    }
-  }
-  return null
-}
-
-const extractJsonInterpretation = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== 'object') return null
-  const parsed = payload as {
-    choices?: Array<{
-      delta?: { content?: string }
-      message?: { content?: string }
-    }>
-  }
-  return (
-    parsed.choices?.[0]?.message?.content ??
-    parsed.choices?.[0]?.delta?.content ??
-    null
-  )
-}
-
-const readErrorMessage = async (response: Response) => {
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    try {
-      const payload = (await response.json()) as { error?: string; message?: string }
-      return payload.error ?? payload.message ?? `${response.status} 请求失败`
-    } catch {
-      return `${response.status} 请求失败`
-    }
-  }
-
-  const text = await response.text()
-  return text.trim() || `${response.status} 请求失败`
-}
-
 const requestInterpretation = async (
   lines: Line[],
   entry: HexagramEntry | null,
@@ -401,130 +322,45 @@ const requestInterpretation = async (
   onChunk?: (text: string) => void
 ) => {
   const prompt = buildInterpretationPrompt(lines, entry, changedEntry)
-  const apiUrl = '/api/llm'
-  const basePayload = {
-    messages: [
-      {
-        role: 'system' as const,
-        content:
-          '你是精通周易的解读师，擅长将古典卦象转化为现代人易懂的建议。请先解释卦辞、爻辞等古典经文的含义，再结合现实情境展开解读，让不懂易经的用户也能充分理解。语气温和、深入浅出，可适当引用原文并加以说明。若用户没有明确说明所问事项，请默认从学业、工作、事业、财富、爱情、家庭、亲戚、朋友等维度中选择与卦象最相关的几个角度进行分析，明确指出哪些维度更值得关注，并说明判断依据来自卦象、卦辞与动爻变化。输出语言：简体中文。',
-      },
-      {
-        role: 'user' as const,
-        content: prompt,
-      },
-    ],
-    temperature: INTERPRETATION_TEMPERATURE,
-    max_tokens: 768,
+
+  const response = await fetch('/api/llm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: [
+        {
+          role: 'system',
+          content:
+            '你是精通周易的解读师，擅长将古典卦象转化为现代人易懂的建议。请先解释卦辞、爻辞等古典经文的含义，再结合现实情境展开解读，让不懂易经的用户也能充分理解。语气温和、深入浅出，可适当引用原文并加以说明。若用户没有明确说明所问事项，请默认从学业、工作、事业、财富、爱情、家庭、亲戚、朋友等维度中选择与卦象最相关的几个角度进行分析，明确指出哪些维度更值得关注，并说明判断依据来自卦象、卦辞与动爻变化。输出语言：简体中文。',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: INTERPRETATION_TEMPERATURE,
+      max_tokens: 768,
+    }),
+  })
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { error?: string }
+    throw new Error(payload.error ?? `${response.status} 请求失败`)
   }
 
-  const executeRequest = async (stream: boolean) => {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...basePayload,
-        stream,
-      }),
-    })
-    if (!response.ok) {
-      const errorMessage = await readErrorMessage(response)
-      throw new Error(errorMessage)
-    }
+  if (!response.body) throw new Error('stream_unavailable')
 
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as unknown
-      const content = extractJsonInterpretation(payload)
-      if (!content) {
-        throw new Error('interpretation_empty')
-      }
-      onChunk?.(content)
-      return content
-    }
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let content = ''
 
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('stream_unavailable')
-    }
-    const decoder = new TextDecoder('utf-8')
-    let buffer = ''
-    let content = ''
-    let currentEvent = ''
-    let doneSeen = false
-    while (true) {
-      const { value, done } = await reader.read()
-      if (value) {
-        buffer += decoder.decode(value, { stream: !done })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() ?? ''
-        for (const rawLine of lines) {
-          const line = rawLine.trim()
-          if (!line) {
-            currentEvent = ''
-            continue
-          }
-          if (line.startsWith('event:')) {
-            currentEvent = line.slice(6).trim()
-            continue
-          }
-          if (line.startsWith('data:')) {
-            if (!currentEvent) {
-              const delta = parseSseLine(line)
-              if (delta) {
-                content += delta
-                onChunk?.(content)
-              }
-              continue
-            }
-            const parsedEvent = parseStreamEvent(
-              currentEvent,
-              line.slice(5).trim()
-            )
-            if (!parsedEvent) continue
-            if (parsedEvent.type === 'delta') {
-              content += parsedEvent.content
-              onChunk?.(content)
-            } else if (parsedEvent.type === 'done') {
-              doneSeen = true
-            } else if (parsedEvent.type === 'error') {
-              throw new Error(parsedEvent.message)
-            }
-          }
-        }
-      }
-      if (done || doneSeen) {
-        break
-      }
-    }
-
-    if (buffer.trim()) {
-      const line = buffer.trim()
-      const delta = parseSseLine(line)
-      if (delta) {
-        content += delta
-        onChunk?.(content)
-      }
-    }
-    if (!content && !doneSeen) {
-      throw new Error('interpretation_empty')
-    }
-    return content
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const chunk = decoder.decode(value, { stream: true })
+    content += chunk
+    onChunk?.(content)
   }
 
-  try {
-    return await executeRequest(true)
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      !/^(4\d\d|5\d\d)\s/.test(error.message)
-    ) {
-      return executeRequest(false)
-    }
-    throw error
-  }
+  if (!content) throw new Error('interpretation_empty')
+  return content
 }
 
 const tossLine = (): Line => {

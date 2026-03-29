@@ -1,144 +1,43 @@
+import { createOpenAI } from '@ai-sdk/openai'
+import { streamText } from 'ai'
+import type { ModelMessage, ImagePart, TextPart } from 'ai'
+
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const normalizeChatCompletionsUrl = (rawBaseUrl: string) => {
-  const trimmed = rawBaseUrl.trim().replace(/\/+$/, '')
+type RawPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } }
+
+type RawMessage = {
+  role: 'system' | 'user' | 'assistant'
+  content: string | RawPart[]
+}
+
+const stripChatCompletionsPath = (url: string) => {
+  const trimmed = url.trim().replace(/\/+$/, '')
   return trimmed.endsWith('/chat/completions')
-    ? trimmed
-    : `${trimmed}/chat/completions`
+    ? trimmed.slice(0, -'/chat/completions'.length)
+    : trimmed
 }
 
-const jsonResponse = (body: Record<string, string>, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  })
-
-const encoder = new TextEncoder()
-const UPSTREAM_TIMEOUT_MS = 25000
-const UPSTREAM_STREAMING_TIMEOUT_MS = 56000
-const UPSTREAM_VISION_STREAMING_TIMEOUT_MS = 57000
-const UPSTREAM_RETRY_DELAY_MS = 600
-const isJsonResponse = (contentType: string | null) =>
-  (contentType ?? '').toLowerCase().includes('application/json')
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-const writeSseEvent = (
-  controller: ReadableStreamDefaultController<Uint8Array>,
-  event: 'delta' | 'done' | 'error',
-  data: unknown
-) => {
-  controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
-}
-
-const extractErrorMessage = (value: unknown): string | null => {
-  if (!value || typeof value !== 'object') return null
-  const candidate = value as {
-    error?: unknown
-    message?: unknown
-  }
-
-  if (typeof candidate.error === 'string' && candidate.error.trim()) {
-    return candidate.error.trim()
-  }
-  if (candidate.error && typeof candidate.error === 'object') {
-    const nestedMessage = extractErrorMessage(candidate.error)
-    if (nestedMessage) return nestedMessage
-  }
-  if (typeof candidate.message === 'string' && candidate.message.trim()) {
-    return candidate.message.trim()
-  }
-  return null
-}
-
-const classifyProxyError = (error: unknown, streaming: boolean) => {
-  const candidate = error as {
-    name?: string
-    message?: string
-    cause?: unknown
-    overloaded?: unknown
-    code?: unknown
-  }
-  const causeMessage =
-    candidate.cause instanceof Error ? candidate.cause.message : String(candidate.cause ?? '')
-  const rawMessage = `${candidate.message ?? ''} ${causeMessage}`.toLowerCase()
-  const overloaded =
-    candidate.overloaded === true ||
-    rawMessage.includes('overloaded') ||
-    rawMessage.includes('rate limit') ||
-    rawMessage.includes('too many requests')
-  const timeout =
-    candidate.name === 'TimeoutError' ||
-    candidate.name === 'AbortError' ||
-    rawMessage.includes('timed out') ||
-    rawMessage.includes('timeout') ||
-    rawMessage.includes('aborted')
-
-  if (overloaded) {
-    return {
-      status: 503,
-      code: 'upstream_overloaded',
-      message: '模型服务当前繁忙，请稍后再试。',
-      // For streaming requests, retrying before sending the initial SSE response
-      // can cause Vercel to kill the function for not responding quickly enough.
-      retryable: !streaming,
-    }
-  }
-
-  if (timeout) {
-    return {
-      status: 504,
-      code: 'upstream_timeout',
-      message: '模型服务响应超时，请稍后再试。',
-      // Edge runtime has a 30s maxDuration on Hobby. Retrying after a 25s
-      // upstream timeout almost guarantees the whole function times out again
-      // before we can return a graceful error to the client.
-      retryable: false,
-    }
-  }
-
-  return {
-    status: 502,
-    code: 'upstream_fetch_failed',
-    message: '连接模型服务失败，请稍后再试。',
-    retryable: false,
-  }
-}
-
-const extractContent = (payload: unknown): string | null => {
-  if (!payload || typeof payload !== 'object') return null
-  const parsed = payload as {
-    choices?: Array<{
-      delta?: { content?: string }
-      message?: { content?: string }
-    }>
-  }
-  return (
-    parsed.choices?.[0]?.delta?.content ??
-    parsed.choices?.[0]?.message?.content ??
-    null
+const hasVisionInput = (messages: RawMessage[]): boolean =>
+  messages.some(
+    (m) => Array.isArray(m.content) && m.content.some((p) => p.type === 'image_url')
   )
-}
 
-const payloadHasVisionInput = (value: unknown): boolean => {
-  if (Array.isArray(value)) {
-    return value.some((item) => payloadHasVisionInput(item))
-  }
-  if (!value || typeof value !== 'object') return false
-
-  const record = value as Record<string, unknown>
-  if (
-    record.type === 'image_url' ||
-    record.type === 'input_image' ||
-    record.type === 'video_url' ||
-    record.type === 'input_video'
-  ) {
-    return true
-  }
-
-  return Object.values(record).some((nested) => payloadHasVisionInput(nested))
-}
+const toModelMessages = (messages: RawMessage[]): ModelMessage[] =>
+  messages.map((msg) => {
+    if (typeof msg.content === 'string') {
+      return { role: msg.role, content: msg.content } as ModelMessage
+    }
+    const parts: (TextPart | ImagePart)[] = msg.content.map((part) =>
+      part.type === 'image_url'
+        ? { type: 'image' as const, image: part.image_url.url }
+        : { type: 'text' as const, text: part.text }
+    )
+    return { role: msg.role, content: parts } as ModelMessage
+  })
 
 export async function POST(request: Request) {
   const apiKey = process.env.AI_API_KEY
@@ -146,340 +45,36 @@ export async function POST(request: Request) {
   const primaryModel = process.env.AI_PRIMARY_MODEL?.trim()
   const visionModel = process.env.AI_VISION_MODEL?.trim() || primaryModel
 
-  if (!apiKey) {
-    return jsonResponse({ error: 'AI_API_KEY is not configured' }, 500)
+  if (!apiKey || !rawBaseUrl || !primaryModel) {
+    return Response.json({ error: 'AI service is not configured' }, { status: 500 })
   }
-  if (!rawBaseUrl) {
-    return jsonResponse({ error: 'AI_API_BASE_URL is not configured' }, 500)
-  }
-  if (!primaryModel) {
-    return jsonResponse({ error: 'AI_PRIMARY_MODEL is not configured' }, 500)
-  }
-  const baseUrl = normalizeChatCompletionsUrl(rawBaseUrl)
 
-  let payload: unknown
+  let body: { messages?: unknown; temperature?: number; max_tokens?: number }
   try {
-    payload = await request.json()
+    body = await request.json()
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400)
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return jsonResponse({ error: 'Invalid request payload' }, 400)
+  const { messages, temperature, max_tokens } = body
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return Response.json({ error: 'messages is required' }, { status: 400 })
   }
 
-  const requestedModel = (payload as { model?: unknown }).model
-  const hasVisionInput = payloadHasVisionInput(payload)
-  const resolvedModel =
-    typeof requestedModel === 'string' && requestedModel.trim()
-      ? requestedModel.trim()
-      : hasVisionInput
-        ? visionModel
-        : primaryModel
+  const rawMessages = messages as RawMessage[]
+  const modelId = hasVisionInput(rawMessages) ? visionModel! : primaryModel
 
-  const upstreamPayload = {
-    ...payload,
-    model: resolvedModel,
-  }
+  const openai = createOpenAI({
+    baseURL: stripChatCompletionsPath(rawBaseUrl),
+    apiKey,
+  })
 
-  const shouldStream =
-    'stream' in upstreamPayload &&
-    (upstreamPayload as { stream?: unknown }).stream !== false
+  const result = streamText({
+    model: openai(modelId),
+    messages: toModelMessages(rawMessages),
+    temperature: temperature ?? 0.7,
+    maxOutputTokens: max_tokens,
+  })
 
-  try {
-    if (shouldStream) {
-      const stream = new ReadableStream({
-        async start(controller) {
-          let response: Response | null = null
-
-          try {
-            const streamingTimeoutMs = hasVisionInput
-              ? UPSTREAM_VISION_STREAMING_TIMEOUT_MS
-              : UPSTREAM_STREAMING_TIMEOUT_MS
-
-            for (let attempt = 1; attempt <= 2; attempt += 1) {
-              try {
-                response = await fetch(baseUrl, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${apiKey}`,
-                  },
-                  body: JSON.stringify(upstreamPayload),
-                  signal: AbortSignal.timeout(streamingTimeoutMs),
-                })
-                break
-              } catch (error) {
-                const classified = classifyProxyError(error, true)
-                console.error('Proxy fetch failed', {
-                  attempt,
-                  status: classified.status,
-                  code: classified.code,
-                  retryable: classified.retryable,
-                  model: resolvedModel,
-                  stream: true,
-                  baseUrl,
-                  error,
-                })
-
-                if (!classified.retryable || attempt === 2) {
-                  writeSseEvent(controller, 'error', { error: classified.message, code: classified.code })
-                  writeSseEvent(controller, 'done', {})
-                  return
-                }
-
-                await sleep(UPSTREAM_RETRY_DELAY_MS)
-              }
-            }
-
-            if (!response) {
-              writeSseEvent(controller, 'error', {
-                error: '连接模型服务失败，请稍后再试。',
-                code: 'upstream_fetch_failed',
-              })
-              writeSseEvent(controller, 'done', {})
-              return
-            }
-
-            if (!response.ok) {
-              const contentType = response.headers.get('content-type')
-              const errorText = await response.text()
-              let errorMessage = errorText.trim()
-              let errorCode = 'upstream_http_error'
-
-              if (isJsonResponse(contentType)) {
-                try {
-                  const parsed = JSON.parse(errorText) as unknown
-                  errorMessage = extractErrorMessage(parsed) ?? errorMessage
-                  const extractedCode =
-                    parsed && typeof parsed === 'object' && 'code' in parsed &&
-                    typeof (parsed as { code?: unknown }).code === 'string'
-                      ? (parsed as { code: string }).code
-                      : null
-                  if (extractedCode) errorCode = extractedCode
-                } catch {
-                  // Fall back to raw text.
-                }
-              }
-
-              if (!errorMessage) {
-                if (response.status === 429 || response.status === 503) {
-                  errorMessage = '模型服务当前繁忙，请稍后再试。'
-                  errorCode = 'upstream_overloaded'
-                } else if (response.status === 504) {
-                  errorMessage = '模型服务响应超时，请稍后再试。'
-                  errorCode = 'upstream_timeout'
-                } else {
-                  errorMessage = '模型服务暂时不可用，请稍后再试。'
-                }
-              }
-
-              writeSseEvent(controller, 'error', { error: errorMessage, code: errorCode })
-              writeSseEvent(controller, 'done', {})
-              return
-            }
-
-            if (!response.body) {
-              writeSseEvent(controller, 'error', {
-                error: 'Upstream returned empty body',
-                code: 'upstream_empty_body',
-              })
-              writeSseEvent(controller, 'done', {})
-              return
-            }
-
-            const reader = response.body.getReader()
-            const decoder = new TextDecoder()
-            let sseBuffer = ''
-            let streamCompleted = false
-
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
-
-              sseBuffer += decoder.decode(value, { stream: true })
-              const lines = sseBuffer.split('\n')
-              sseBuffer = lines.pop() ?? ''
-
-              for (const line of lines) {
-                const trimmed = line.trim()
-                if (!trimmed.startsWith('data:')) continue
-
-                const rawPayload = trimmed.slice(5).trim()
-                if (!rawPayload) continue
-                if (rawPayload === '[DONE]') {
-                  streamCompleted = true
-                  writeSseEvent(controller, 'done', {})
-                  await reader.cancel()
-                  break
-                }
-
-                try {
-                  const parsed = JSON.parse(rawPayload)
-                  const delta = extractContent(parsed)
-                  if (!delta) continue
-                  writeSseEvent(controller, 'delta', delta)
-                } catch {
-                  // Skip malformed upstream SSE chunks.
-                }
-              }
-
-              if (streamCompleted) break
-            }
-
-            const trailingPayload = sseBuffer.trim()
-            if (trailingPayload.startsWith('data:')) {
-              const rawPayload = trailingPayload.slice(5).trim()
-              if (rawPayload === '[DONE]') {
-                streamCompleted = true
-              } else if (rawPayload) {
-                try {
-                  const parsed = JSON.parse(rawPayload)
-                  const delta = extractContent(parsed)
-                  if (delta) writeSseEvent(controller, 'delta', delta)
-                } catch {
-                  // Ignore incomplete trailing chunk payloads.
-                }
-              }
-            }
-
-            if (!streamCompleted) {
-              writeSseEvent(controller, 'done', {})
-            }
-          } catch (error) {
-            console.error('Stream processing error:', error)
-            writeSseEvent(controller, 'error', { error: 'Stream interrupted' })
-            writeSseEvent(controller, 'done', {})
-          } finally {
-            controller.close()
-          }
-        },
-      })
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-          'X-Accel-Buffering': 'no',
-        },
-      })
-    }
-
-    let response: Response | null = null
-
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
-      try {
-        response = await fetch(baseUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(upstreamPayload),
-          signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-        })
-        break
-      } catch (error) {
-        const classified = classifyProxyError(error, false)
-        console.error('Proxy fetch failed', {
-          attempt,
-          status: classified.status,
-          code: classified.code,
-          retryable: classified.retryable,
-          model: resolvedModel,
-          stream: false,
-          baseUrl,
-          error,
-        })
-
-        if (!classified.retryable || attempt === 2) {
-          return jsonResponse(
-            {
-              error: classified.message,
-              code: classified.code,
-            },
-            classified.status
-          )
-        }
-
-        await sleep(UPSTREAM_RETRY_DELAY_MS)
-      }
-    }
-
-    if (!response) {
-      return jsonResponse(
-        {
-          error: '连接模型服务失败，请稍后再试。',
-          code: 'upstream_fetch_failed',
-        },
-        502
-      )
-    }
-
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type')
-      const errorText = await response.text()
-      let errorMessage = errorText.trim()
-      let errorCode = 'upstream_http_error'
-
-      if (isJsonResponse(contentType)) {
-        try {
-          const parsed = JSON.parse(errorText) as unknown
-          errorMessage = extractErrorMessage(parsed) ?? errorMessage
-          const extractedCode =
-            parsed && typeof parsed === 'object' && 'code' in parsed &&
-            typeof (parsed as { code?: unknown }).code === 'string'
-              ? (parsed as { code: string }).code
-              : null
-          if (extractedCode) errorCode = extractedCode
-        } catch {
-          // Fall back to raw text.
-        }
-      }
-
-      if (!errorMessage) {
-        if (response.status === 429 || response.status === 503) {
-          errorMessage = '模型服务当前繁忙，请稍后再试。'
-          errorCode = 'upstream_overloaded'
-        } else if (response.status === 504) {
-          errorMessage = '模型服务响应超时，请稍后再试。'
-          errorCode = 'upstream_timeout'
-        } else {
-          errorMessage = '模型服务暂时不可用，请稍后再试。'
-        }
-      }
-
-      return jsonResponse(
-        {
-          error: errorMessage,
-          code: errorCode,
-        },
-        response.status
-      )
-    }
-
-    return new Response(response.body, {
-      status: response.status,
-      headers: {
-        'Content-Type':
-          response.headers.get('content-type') ?? 'application/json; charset=utf-8',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    })
-  } catch (error) {
-    console.error('Proxy error:', {
-      model: resolvedModel,
-      stream: shouldStream,
-      baseUrl,
-      error,
-    })
-    return jsonResponse(
-      {
-        error: '模型服务暂时不可用，请稍后再试。',
-        code: 'proxy_internal_error',
-      },
-      500
-    )
-  }
+  return result.toTextStreamResponse()
 }
