@@ -595,7 +595,7 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
     highlightChanging: boolean
   ) => {
     drawSectionTitle(title)
-    drawHexagramPanel(`${title}卦象`, lines)
+    drawHexagramPanel('卦象', lines)
 
     drawParagraph('卦辞', 30, '#352d27', 10)
     drawParagraph(entry?.guaCi ?? '暂无卦辞', 29, '#4d433a', 22)
