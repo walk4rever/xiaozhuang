@@ -418,7 +418,18 @@ const generateShareCard = async (
   return await canvasToBlob(canvas, 0.92)
 }
 
-const downloadBlob = (blob: Blob, filename: string) => {
+const downloadBlob = async (blob: Blob, filename: string) => {
+  // On mobile, prefer Web Share API (triggers native share sheet with "Save to Photos")
+  const file = new File([blob], filename, { type: blob.type || 'image/jpeg' })
+  if (
+    typeof navigator.share === 'function' &&
+    typeof navigator.canShare === 'function' &&
+    navigator.canShare({ files: [file] })
+  ) {
+    await navigator.share({ files: [file] })
+    return
+  }
+  // Desktop fallback: <a download>
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -664,7 +675,7 @@ export default function XunClient() {
   const handleSaveShareImage = async () => {
     const blob = shareBlob ?? (await buildShareCard())
     if (!blob) return
-    downloadBlob(blob, 'xiaozhuang-share.jpg')
+    await downloadBlob(blob, 'xiaozhuang-share.jpg')
   }
 
   const handleCloseShare = () => {
