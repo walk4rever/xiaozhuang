@@ -85,11 +85,10 @@ export async function POST(request: Request) {
   const openai = createOpenAI({
     baseURL: stripChatCompletionsPath(rawBaseUrl),
     apiKey,
-    compatibility: 'compatible',
   })
 
   const result = streamText({
-    model: openai(modelId),
+    model: openai.chat(modelId),
     messages: toModelMessages(rawMessages),
     temperature: temperature ?? 0.7,
     maxOutputTokens: max_tokens,
