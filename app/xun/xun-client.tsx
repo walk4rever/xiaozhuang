@@ -588,6 +588,23 @@ export default function XunClient() {
     }
   }, [shareImageUrl])
 
+  useEffect(() => {
+    if (!isShareOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsShareOpen(false)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isShareOpen])
+
   const resetShareCard = () => {
     if (shareImageUrl) URL.revokeObjectURL(shareImageUrl)
     setShareImageUrl(null)
@@ -806,8 +823,14 @@ export default function XunClient() {
           </button>
 
           {isShareOpen && shareImageUrl ? (
-            <div className="xun-share-sheet" role="dialog" aria-modal="true" aria-label="分享图片预览">
-              <div className="xun-share-sheet-card">
+            <div
+              className="xun-share-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="分享图片预览"
+              onClick={handleCloseShare}
+            >
+              <div className="xun-share-sheet-card" onClick={(event) => event.stopPropagation()}>
                 <div className="xun-share-sheet-header">
                   <div>
                     <h4>生成好的图片</h4>
