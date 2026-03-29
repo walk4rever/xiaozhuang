@@ -53,6 +53,8 @@ const INITIAL_JPEG_QUALITY = 0.88
 const MIN_JPEG_QUALITY = 0.56
 const SHARE_CARD_WIDTH = 1080
 const SHARE_CARD_HEIGHT = 1440
+const SHARE_DEST_URL = 'https://xz.air7.fun'
+const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const extractJsonBlock = (text: string) => {
   const trimmed = text.trim()
@@ -309,70 +311,46 @@ const generateShareCard = async (
   ctx.lineWidth = 2
   ctx.stroke()
 
-  ctx.fillStyle = 'rgba(139, 74, 60, 0.08)'
-  ctx.fillRect(86, 88, 6, h - 176)
-
-  ctx.fillStyle = '#8b4a3c'
-  drawRoundedRect(ctx, 100, 96, 110, 110, 26)
-  ctx.fill()
-  ctx.fillStyle = '#f6efe5'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = '72px "Ma Shan Zheng", serif'
-  ctx.fillText('庄', 155, 150)
-
-  ctx.textAlign = 'left'
-  ctx.textBaseline = 'top'
-  ctx.fillStyle = '#6f7f7a'
-  ctx.font = '400 24px "Noto Serif SC", serif'
-  ctx.fillText(usePhotoTemplate ? '小庄 · 照片寻句' : '小庄 · 纯诗句雅版', 244, 106)
-  ctx.fillStyle = '#8d7761'
-  ctx.font = '400 20px "Noto Serif SC", serif'
-  ctx.fillText('借古人的话，说今天的心', 244, 144)
-
-  let currentY = usePhotoTemplate ? 248 : 226
+  let currentY = usePhotoTemplate ? 72 : 92
 
   if (usePhotoTemplate && image) {
     const photo = await loadImage(image.dataUrl)
-    const frameX = 98
+    const frameX = 72
     const frameY = currentY
-    const frameW = w - 196
-    const frameH = 516
+    const frameW = w - 144
+    const frameH = 640
 
-    ctx.fillStyle = 'rgba(255,255,255,0.74)'
-    drawRoundedRect(ctx, frameX - 12, frameY - 12, frameW + 24, frameH + 24, 44)
+    ctx.fillStyle = 'rgba(255,255,255,0.82)'
+    drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
     ctx.fill()
 
     ctx.save()
     drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
     ctx.clip()
 
-    const scale = Math.max(frameW / photo.width, frameH / photo.height)
+    const scale = Math.min(frameW / photo.width, frameH / photo.height)
     const drawW = photo.width * scale
     const drawH = photo.height * scale
     const drawX = frameX + (frameW - drawW) / 2
     const drawY = frameY + (frameH - drawH) / 2
-    ctx.drawImage(photo, drawX, drawY, drawW, drawH)
 
-    const photoFade = ctx.createLinearGradient(0, frameY + frameH * 0.58, 0, frameY + frameH)
-    photoFade.addColorStop(0, 'rgba(36,31,27,0)')
-    photoFade.addColorStop(1, 'rgba(36,31,27,0.16)')
-    ctx.fillStyle = photoFade
+    ctx.fillStyle = '#f5f0e7'
     ctx.fillRect(frameX, frameY, frameW, frameH)
+    ctx.drawImage(photo, drawX, drawY, drawW, drawH)
     ctx.restore()
 
-    ctx.strokeStyle = 'rgba(122, 104, 86, 0.16)'
+    ctx.strokeStyle = 'rgba(122, 104, 86, 0.14)'
     ctx.lineWidth = 2
     drawRoundedRect(ctx, frameX, frameY, frameW, frameH, 34)
     ctx.stroke()
 
-    currentY = frameY + frameH + 58
+    currentY = frameY + frameH + 42
   }
 
-  const textCardX = 98
+  const textCardX = 72
   const textCardY = currentY
-  const textCardW = w - 196
-  const textCardH = usePhotoTemplate ? 430 : 760
+  const textCardW = w - 144
+  const textCardH = usePhotoTemplate ? 540 : 980
 
   drawRoundedRect(ctx, textCardX, textCardY, textCardW, textCardH, 32)
   ctx.fillStyle = 'rgba(255, 252, 247, 0.84)'
@@ -400,15 +378,13 @@ const generateShareCard = async (
   ctx.fillStyle = '#241f1b'
   ctx.font = usePhotoTemplate ? '700 58px "Noto Serif SC", serif' : '700 66px "Noto Serif SC", serif'
   const quoteLines = wrapText(ctx, result.quote, textCardW - 112, usePhotoTemplate ? 4 : 7)
-  let quoteY = textCardY + (usePhotoTemplate ? 58 : 92)
+  let quoteY = textCardY + (usePhotoTemplate ? 58 : 88)
   for (const line of quoteLines) {
     ctx.fillText(line, textCardX + 56, quoteY)
     quoteY += 80
   }
 
-  ctx.fillStyle = '#8d7761'
-  ctx.fillRect(textCardX + 56, quoteY + 12, 120, 2)
-  quoteY += 34
+  quoteY += 18
 
   ctx.fillStyle = '#746d64'
   ctx.font = '400 28px "Noto Serif SC", serif'
@@ -417,26 +393,28 @@ const generateShareCard = async (
 
   ctx.fillStyle = '#4f4842'
   ctx.font = usePhotoTemplate ? '400 28px "Noto Serif SC", serif' : '400 30px "Noto Serif SC", serif'
-  const resonanceLines = wrapText(ctx, result.resonance, textCardW - 112, usePhotoTemplate ? 4 : 8)
-  for (const line of resonanceLines) {
+  const mergedText = `${result.interpretation.trim()}\n\n${result.resonance.trim()}`
+  const mergedLines = wrapText(ctx, mergedText.replace(/\n+/g, ' '), textCardW - 112, usePhotoTemplate ? 7 : 12)
+  for (const line of mergedLines) {
     ctx.fillText(line, textCardX + 56, quoteY)
     quoteY += usePhotoTemplate ? 44 : 48
   }
 
-  if (!usePhotoTemplate) {
-    quoteY += 20
+  try {
+    const qrImage = await loadImage(SHARE_QR_PATH)
+    const qrSize = 126
+    const qrX = w - 72 - qrSize
+    const qrY = h - 72 - qrSize
+    ctx.fillStyle = 'rgba(255,255,255,0.92)'
+    drawRoundedRect(ctx, qrX - 10, qrY - 10, qrSize + 20, qrSize + 20, 20)
+    ctx.fill()
+    ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
+  } catch {
     ctx.fillStyle = '#8d7761'
-    ctx.font = '400 22px "Noto Serif SC", serif'
-    ctx.fillText('雅版仅保留诗句、出处与共鸣，更适合单独发圈。', textCardX + 56, quoteY)
+    ctx.font = '400 18px "Noto Serif SC", serif'
+    ctx.textAlign = 'right'
+    ctx.fillText(SHARE_DEST_URL, w - 72, h - 88)
   }
-
-  ctx.fillStyle = '#6f7f7a'
-  ctx.font = '400 22px "Noto Serif SC", serif'
-  ctx.fillText('适合保存到相册后分享到朋友圈', 100, h - 110)
-  ctx.textAlign = 'right'
-  ctx.fillStyle = '#8b4a3c'
-  ctx.font = '400 30px "Ma Shan Zheng", serif'
-  ctx.fillText('题于小庄', w - 96, h - 118)
 
   const blob = await canvasToBlob(canvas, 0.92)
   return blob
