@@ -20,6 +20,9 @@ type ImageAsset = {
 
 type ShareTemplate = 'photo' | 'quote'
 
+const SHARE_ICON_PATH =
+  'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
+
 const SYSTEM_PROMPT = `你是"小庄"，一位深谙中国古典诗词与古文的文化伙伴。用户会通过两种方式向你提供线索：
 1. 文字描述一个场景、一种情绪、或一个画面
 2. 上传一张照片，有时会再补充一句主观感受
@@ -570,13 +573,13 @@ export default function XunClient() {
   const [image, setImage] = useState<ImageAsset | null>(null)
   const [shareBlob, setShareBlob] = useState<Blob | null>(null)
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null)
-  const [shareTemplate, setShareTemplate] = useState<ShareTemplate>('photo')
   const requestIdRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const parsed = rawOutput ? parseResult(rawOutput) : null
   const isStreaming = isLoading && rawOutput.length > 0
   const canSubmit = Boolean(input.trim() || image)
+  const shareTemplate: ShareTemplate = image ? 'photo' : 'quote'
 
   useEffect(() => {
     return () => {
@@ -655,12 +658,6 @@ export default function XunClient() {
     } finally {
       setIsGeneratingShare(false)
     }
-  }
-
-  const handleSaveShare = async () => {
-    const blob = shareBlob ?? (await buildShareCard())
-    if (!blob) return
-    downloadBlob(blob, 'xiaozhuang-share.jpg')
   }
 
   const handleSystemShare = async () => {
@@ -788,11 +785,21 @@ export default function XunClient() {
 
       {parsed && (
         <section className="panel xun-result">
-          {image ? (
-            <div className="xun-result-image-wrap">
-              <img src={image.dataUrl} alt="用于寻句的照片" className="xun-result-image" />
-            </div>
-          ) : null}
+          <div className="xun-result-toolbar">
+            <span className="xun-result-tag">{image ? '看图寻句' : '文字寻句'}</span>
+            <button
+              type="button"
+              className="xun-share-icon-button"
+              onClick={handleSystemShare}
+              disabled={isGeneratingShare}
+              aria-label="分享这条寻句结果"
+              title="分享"
+            >
+              <svg viewBox="0 0 18 18" aria-hidden="true">
+                <path d={SHARE_ICON_PATH} />
+              </svg>
+            </button>
+          </div>
           <div className="xun-quote-block">
             <p className="quote-text">{parsed.quote}</p>
             <p className="quote-source">—— {parsed.source}</p>
@@ -806,87 +813,6 @@ export default function XunClient() {
             <p>{parsed.resonance}</p>
           </div>
 
-          <div className="xun-share-panel">
-            <div className="xun-share-heading">
-              <div>
-                <h4>🖼️ 分享到朋友圈</h4>
-                <p className="xun-share-copy">
-                  生成一张更适合朋友圈的山水纸面长图。照片、诗句与共鸣会被整理成更完整的发布画面。
-                </p>
-              </div>
-              <div className="xun-share-badges" aria-hidden="true">
-                <span>竖图长卡</span>
-                <span>{shareTemplate === 'quote' ? '纯诗句雅版' : '照片诗句版'}</span>
-                <span>适合保存转发</span>
-              </div>
-            </div>
-            <div className="xun-share-template-switch" role="tablist" aria-label="分享图模板选择">
-              <button
-                type="button"
-                className={`xun-template-chip ${shareTemplate === 'photo' ? 'is-active' : ''}`}
-                aria-pressed={shareTemplate === 'photo'}
-                onClick={() => {
-                  setShareTemplate('photo')
-                  resetShareCard()
-                }}
-              >
-                照片 + 诗句
-              </button>
-              <button
-                type="button"
-                className={`xun-template-chip ${shareTemplate === 'quote' ? 'is-active' : ''}`}
-                aria-pressed={shareTemplate === 'quote'}
-                onClick={() => {
-                  setShareTemplate('quote')
-                  resetShareCard()
-                }}
-              >
-                纯诗句雅版
-              </button>
-            </div>
-            <div className="xun-share-actions">
-              <button
-                type="button"
-                className="xun-secondary-button"
-                onClick={buildShareCard}
-                disabled={isGeneratingShare}
-              >
-                {isGeneratingShare
-                  ? '生成中…'
-                  : shareImageUrl
-                    ? '重新生成分享图'
-                    : shareTemplate === 'quote'
-                      ? '生成纯诗句雅版'
-                      : '生成朋友圈分享图'}
-              </button>
-              <button
-                type="button"
-                className="xun-secondary-button"
-                onClick={handleSaveShare}
-                disabled={isGeneratingShare}
-              >
-                保存分享图
-              </button>
-              <button
-                type="button"
-                className="xun-secondary-button xun-secondary-button-accent"
-                onClick={handleSystemShare}
-                disabled={isGeneratingShare}
-              >
-                系统分享
-              </button>
-            </div>
-          </div>
-
-          {shareImageUrl ? (
-            <div className="xun-share-preview">
-              <div className="xun-share-preview-caption">
-                <span>分享图预览</span>
-                <span>建议先保存，再从相册发朋友圈</span>
-              </div>
-              <img src={shareImageUrl} alt="朋友圈分享图预览" className="xun-share-preview-image" />
-            </div>
-          ) : null}
         </section>
       )}
     </div>

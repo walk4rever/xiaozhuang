@@ -143,34 +143,19 @@
   border: 1px solid var(--line-faint);
 }
 
-.xun-image-preview-wrap,
-.xun-result-image-wrap,
-.xun-share-preview {
+.xun-image-preview-wrap {
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.82);
-}
-
-.xun-image-preview-wrap {
   margin-bottom: 0.9rem;
 }
 
-.xun-image-preview,
-.xun-result-image,
-.xun-share-preview-image {
+.xun-image-preview {
   width: 100%;
   display: block;
-}
-
-.xun-image-preview,
-.xun-result-image {
   max-height: 420px;
   object-fit: cover;
-}
-
-.xun-result-image-wrap {
-  margin-bottom: 1rem;
 }
 
 .xun-image-meta {
@@ -281,104 +266,54 @@
   white-space: pre-wrap;
 }
 
-.xun-share-panel {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--line-faint);
+.xun-result-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.xun-share-heading {
-  display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 0.9rem;
 }
 
-.xun-share-panel h4 {
-  margin: 0 0 0.35rem;
-}
-
-.xun-share-copy {
-  color: var(--ink-1);
-}
-
-.xun-share-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.45rem;
-}
-
-.xun-share-badges span {
+.xun-result-tag {
   display: inline-flex;
   align-items: center;
-  padding: 0.28rem 0.7rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   background: rgba(95, 124, 119, 0.08);
   border: 1px solid rgba(95, 124, 119, 0.16);
   color: var(--shanshui-primary);
-  font-size: 0.78rem;
-  letter-spacing: 0.03rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.04rem;
 }
 
-.xun-share-template-switch {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.xun-template-chip {
-  border: 1px solid rgba(95, 124, 119, 0.18);
-  background: rgba(255, 255, 255, 0.72);
-  color: var(--ink-1);
+.xun-share-icon-button {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: inline-grid;
+  place-items: center;
   border-radius: 999px;
-  padding: 0.48rem 0.9rem;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.xun-template-chip:hover {
-  transform: translateY(-1px);
-  border-color: rgba(95, 124, 119, 0.32);
-}
-
-.xun-template-chip.is-active {
-  background: rgba(95, 124, 119, 0.12);
+  border: 1px solid rgba(95, 124, 119, 0.22);
+  background: rgba(255, 255, 255, 0.82);
   color: var(--shanshui-primary);
-  border-color: rgba(95, 124, 119, 0.28);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-.xun-share-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.xun-share-icon-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(95, 124, 119, 0.34);
 }
 
-.xun-share-preview {
-  margin-top: 1rem;
-  padding: 0.85rem;
-  background:
-    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.72), transparent 28%),
-    linear-gradient(180deg, rgba(248, 244, 237, 0.9), rgba(239, 233, 223, 0.88));
+.xun-share-icon-button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
 }
 
-.xun-share-preview-caption {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.7rem;
-  color: var(--ink-2);
-  font-size: 0.84rem;
-}
-
-.xun-share-preview-image {
-  border-radius: 16px;
-  box-shadow: 0 18px 36px rgba(74, 66, 56, 0.12);
+.xun-share-icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
 }
 
 @media (max-width: 480px) {
@@ -412,23 +347,7 @@
     font-size: 1.14rem;
   }
 
-  .xun-share-heading,
-  .xun-share-preview-caption {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .xun-share-badges,
-  .xun-share-template-switch {
-    justify-content: flex-start;
-  }
-
-  .xun-secondary-button {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .xun-share-preview {
-    padding: 0.6rem;
+  .xun-result-toolbar {
+    margin-bottom: 0.75rem;
   }
 }
