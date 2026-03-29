@@ -52,6 +52,7 @@ export default function Home() {
           <p className="description">
             当你说不清、想不明、写不出的时候，小庄帮你找到最贴切的那句话。
           </p>
+          <p className={styles.heroQuote}>天地有大美而不言 —— 庄子</p>
         </div>
       </header>
 
