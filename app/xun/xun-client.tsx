@@ -418,15 +418,6 @@ const generateShareCard = async (
   return await canvasToBlob(canvas, 0.92)
 }
 
-const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
 async function requestXun(
   input: string,
   image: ImageAsset | null,
@@ -661,12 +652,6 @@ export default function XunClient() {
     setIsShareOpen(true)
   }
 
-  const handleSaveShareImage = async () => {
-    const blob = shareBlob ?? (await buildShareCard())
-    if (!blob) return
-    downloadBlob(blob, 'xiaozhuang-share.jpg')
-  }
-
   const handleCloseShare = () => {
     setIsShareOpen(false)
   }
@@ -816,15 +801,6 @@ export default function XunClient() {
                 </div>
                 <div className="xun-share-sheet-preview">
                   <img src={shareImageUrl} alt="高质量分享图片预览" className="xun-share-sheet-image" />
-                </div>
-                <p className="xun-share-sheet-caption">保存后即可发到朋友圈或留作此刻纪念。</p>
-                <div className="xun-share-sheet-actions">
-                  <button type="button" className="xun-secondary-button xun-secondary-button-accent" onClick={handleSaveShareImage}>
-                    保存图片
-                  </button>
-                  <button type="button" className="xun-secondary-button" onClick={handleCloseShare}>
-                    关闭
-                  </button>
                 </div>
               </div>
             </div>
