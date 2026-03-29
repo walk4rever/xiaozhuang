@@ -85,6 +85,7 @@ export async function POST(request: Request) {
   const openai = createOpenAI({
     baseURL: stripChatCompletionsPath(rawBaseUrl),
     apiKey,
+    compatibility: 'compatible',
   })
 
   const result = streamText({
