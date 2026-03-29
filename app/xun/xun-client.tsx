@@ -375,29 +375,51 @@ const generateShareCard = async (
     ctx.fill()
   }
 
-  ctx.fillStyle = '#241f1b'
-  ctx.font = usePhotoTemplate ? '700 50px "Noto Serif SC", serif' : '700 60px "Noto Serif SC", serif'
+  const quoteFontSize = usePhotoTemplate ? 40 : 48
+  const quoteLineHeight = 80
+  const interpretLineHeight = usePhotoTemplate ? 42 : 46
+  const sourceLineHeight = 58
+  const sourceGap = 18
+
+  // Pre-calculate line wrapping so we can vertically centre the whole block
+  ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
   const quoteLines = wrapText(ctx, result.quote, textCardW - 112, usePhotoTemplate ? 4 : 6)
-  let quoteY = textCardY + (usePhotoTemplate ? 52 : 82)
+
+  ctx.font = usePhotoTemplate ? '400 27px "Noto Serif SC", serif' : '400 29px "Noto Serif SC", serif'
+  const interpretationLines = wrapText(ctx, result.interpretation.trim().replace(/\n+/g, ' '), textCardW - 250, usePhotoTemplate ? 5 : 10)
+
+  const totalContentHeight =
+    quoteLines.length * quoteLineHeight +
+    sourceGap +
+    sourceLineHeight +
+    interpretationLines.length * interpretLineHeight
+
+  const minPadding = 48
+  ctx.textBaseline = 'top'
+  let contentY = textCardY + Math.max(minPadding, (textCardH - totalContentHeight) / 2)
+
+  ctx.fillStyle = '#241f1b'
+  ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
-    ctx.fillText(line, textCardX + 56, quoteY)
-    quoteY += 80
+    ctx.fillText(line, textCardX + 56, contentY)
+    contentY += quoteLineHeight
   }
 
-  quoteY += 18
+  contentY += sourceGap
 
   ctx.fillStyle = '#746d64'
   ctx.font = '400 28px "Noto Serif SC", serif'
-  ctx.fillText(`—— ${result.source}`, textCardX + 56, quoteY)
-  quoteY += 58
+  ctx.fillText(`—— ${result.source}`, textCardX + 56, contentY)
+  contentY += sourceLineHeight
 
   ctx.fillStyle = '#4f4842'
   ctx.font = usePhotoTemplate ? '400 27px "Noto Serif SC", serif' : '400 29px "Noto Serif SC", serif'
-  const interpretationLines = wrapText(ctx, result.interpretation.trim().replace(/\n+/g, ' '), textCardW - 250, usePhotoTemplate ? 5 : 10)
   for (const line of interpretationLines) {
-    ctx.fillText(line, textCardX + 56, quoteY)
-    quoteY += usePhotoTemplate ? 42 : 46
+    ctx.fillText(line, textCardX + 56, contentY)
+    contentY += interpretLineHeight
   }
+
+  ctx.textBaseline = 'alphabetic'
 
   try {
     const qrImage = await loadImage(SHARE_QR_PATH)
