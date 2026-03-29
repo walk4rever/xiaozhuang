@@ -15,8 +15,81 @@ const jsonResponse = (body: Record<string, string>, status: number) =>
   })
 
 const encoder = new TextEncoder()
+const UPSTREAM_TIMEOUT_MS = 25000
+const UPSTREAM_RETRY_DELAY_MS = 600
 const isJsonResponse = (contentType: string | null) =>
   (contentType ?? '').toLowerCase().includes('application/json')
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const extractErrorMessage = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as {
+    error?: unknown
+    message?: unknown
+  }
+
+  if (typeof candidate.error === 'string' && candidate.error.trim()) {
+    return candidate.error.trim()
+  }
+  if (candidate.error && typeof candidate.error === 'object') {
+    const nestedMessage = extractErrorMessage(candidate.error)
+    if (nestedMessage) return nestedMessage
+  }
+  if (typeof candidate.message === 'string' && candidate.message.trim()) {
+    return candidate.message.trim()
+  }
+  return null
+}
+
+const classifyProxyError = (error: unknown) => {
+  const candidate = error as {
+    name?: string
+    message?: string
+    cause?: unknown
+    overloaded?: unknown
+    code?: unknown
+  }
+  const causeMessage =
+    candidate.cause instanceof Error ? candidate.cause.message : String(candidate.cause ?? '')
+  const rawMessage = `${candidate.message ?? ''} ${causeMessage}`.toLowerCase()
+  const overloaded =
+    candidate.overloaded === true ||
+    rawMessage.includes('overloaded') ||
+    rawMessage.includes('rate limit') ||
+    rawMessage.includes('too many requests')
+  const timeout =
+    candidate.name === 'TimeoutError' ||
+    candidate.name === 'AbortError' ||
+    rawMessage.includes('timed out') ||
+    rawMessage.includes('timeout') ||
+    rawMessage.includes('aborted')
+
+  if (overloaded) {
+    return {
+      status: 503,
+      code: 'upstream_overloaded',
+      message: '模型服务当前繁忙，请稍后再试。',
+      retryable: true,
+    }
+  }
+
+  if (timeout) {
+    return {
+      status: 504,
+      code: 'upstream_timeout',
+      message: '模型服务响应超时，请稍后再试。',
+      retryable: true,
+    }
+  }
+
+  return {
+    status: 502,
+    code: 'upstream_fetch_failed',
+    message: '连接模型服务失败，请稍后再试。',
+    retryable: false,
+  }
+}
 
 const extractContent = (payload: unknown): string | null => {
   if (!payload || typeof payload !== 'object') return null
@@ -76,25 +149,97 @@ export async function POST(request: Request) {
     (upstreamPayload as { stream?: unknown }).stream !== false
 
   try {
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(upstreamPayload),
-      signal: AbortSignal.timeout(25000),
-    })
+    let response: Response | null = null
+
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        response = await fetch(baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(upstreamPayload),
+          signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        })
+        break
+      } catch (error) {
+        const classified = classifyProxyError(error)
+        console.error('Proxy fetch failed', {
+          attempt,
+          status: classified.status,
+          code: classified.code,
+          retryable: classified.retryable,
+          model: resolvedModel,
+          stream: shouldStream,
+          baseUrl,
+          error,
+        })
+
+        if (!classified.retryable || attempt === 2) {
+          return jsonResponse(
+            {
+              error: classified.message,
+              code: classified.code,
+            },
+            classified.status
+          )
+        }
+
+        await sleep(UPSTREAM_RETRY_DELAY_MS)
+      }
+    }
+
+    if (!response) {
+      return jsonResponse(
+        {
+          error: '连接模型服务失败，请稍后再试。',
+          code: 'upstream_fetch_failed',
+        },
+        502
+      )
+    }
 
     if (!response.ok) {
+      const contentType = response.headers.get('content-type')
       const errorText = await response.text()
-      return new Response(errorText, {
-        status: response.status,
-        headers: {
-          'Content-Type':
-            response.headers.get('content-type') ?? 'text/plain; charset=utf-8',
+      let errorMessage = errorText.trim()
+      let errorCode = 'upstream_http_error'
+
+      if (isJsonResponse(contentType)) {
+        try {
+          const parsed = JSON.parse(errorText) as unknown
+          errorMessage = extractErrorMessage(parsed) ?? errorMessage
+          const extractedCode =
+            parsed && typeof parsed === 'object' && 'code' in parsed &&
+            typeof (parsed as { code?: unknown }).code === 'string'
+              ? (parsed as { code: string }).code
+              : null
+          if (extractedCode) errorCode = extractedCode
+        } catch {
+          // Fall back to raw text.
+        }
+      }
+
+      if (!errorMessage) {
+        if (response.status === 429 || response.status === 503) {
+          errorMessage = '模型服务当前繁忙，请稍后再试。'
+          errorCode = 'upstream_overloaded'
+        } else if (response.status === 504) {
+          errorMessage = '模型服务响应超时，请稍后再试。'
+          errorCode = 'upstream_timeout'
+        } else {
+          errorMessage = '模型服务暂时不可用，请稍后再试。'
+        }
+      }
+
+      return jsonResponse(
+        {
+          error: errorMessage,
+          code: errorCode,
         },
-      })
+        response.status
+      )
     }
 
     if (!shouldStream || isJsonResponse(response.headers.get('content-type'))) {
@@ -201,9 +346,17 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
-    console.error('Proxy error:', error)
+    console.error('Proxy error:', {
+      model: resolvedModel,
+      stream: shouldStream,
+      baseUrl,
+      error,
+    })
     return jsonResponse(
-      { error: 'Failed to fetch from upstream model provider' },
+      {
+        error: '模型服务暂时不可用，请稍后再试。',
+        code: 'proxy_internal_error',
+      },
       500
     )
   }

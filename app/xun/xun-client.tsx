@@ -89,6 +89,21 @@ const parseStreamEvent = (eventName: string, data: string): SseEvent | null => {
   return null
 }
 
+const readErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    try {
+      const payload = (await response.json()) as { error?: string; message?: string }
+      return payload.error ?? payload.message ?? `${response.status} 请求失败`
+    } catch {
+      return `${response.status} 请求失败`
+    }
+  }
+
+  const text = await response.text()
+  return text.trim() || `${response.status} 请求失败`
+}
+
 async function requestXun(
   input: string,
   onChunk?: (text: string) => void
@@ -108,8 +123,8 @@ async function requestXun(
   })
 
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`${response.status} ${errorText}`.trim())
+    const errorMessage = await readErrorMessage(response)
+    throw new Error(errorMessage)
   }
 
   const contentType = response.headers.get('content-type') ?? ''
