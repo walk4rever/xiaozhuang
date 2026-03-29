@@ -539,6 +539,8 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   const baseName = getHexagramName(result.entry) || '本卦'
   const changedName = getHexagramName(result.changedEntry)
+  const hasChangedHexagram =
+    Boolean(changedName) && result.lines.some((line) => line.changing) && result.changedNumber !== result.number
 
   ctx.fillStyle = '#1f1a16'
   ctx.font = '700 54px "Noto Serif SC", serif'
@@ -548,28 +550,10 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
   ctx.fillStyle = '#6b5f54'
   ctx.font = '400 28px "Noto Serif SC", serif'
   ctx.fillText(`本卦：${baseName}`, padding, y)
-  if (changedName && result.changedNumber !== result.number) {
+  if (hasChangedHexagram && changedName) {
     ctx.fillText(`变卦：${changedName}`, padding + 340, y)
   }
-  y += 56
-
-  ctx.fillStyle = 'rgba(139, 74, 60, 0.12)'
-  drawRoundedRect(ctx, padding, y, contentW, 278, 26)
-  ctx.fill()
-
-  drawHexagramOnCanvas(ctx, result.lines, padding + 56, y + 42, 320, 16, 16)
-  ctx.fillStyle = '#5e5146'
-  ctx.font = '600 28px "Noto Serif SC", serif'
-  ctx.fillText('本卦卦象', padding + 426, y + 52)
-
-  if (result.changedEntry && result.lines.some((line) => line.changing)) {
-    drawHexagramOnCanvas(ctx, result.changedLines, padding + 426, y + 104, 320, 16, 16)
-    ctx.fillStyle = '#6b5f54'
-    ctx.font = '500 24px "Noto Serif SC", serif'
-    ctx.fillText('变卦卦象', padding + 426, y + 218)
-  }
-
-  y += 322
+  y += 58
 
   const drawSectionTitle = (title: string) => {
     ctx.fillStyle = '#2f2722'
@@ -590,16 +574,47 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
     y += gapAfter
   }
 
-  drawSectionTitle('卦辞')
-  drawParagraph(result.entry?.guaCi ?? '暂无卦辞', 30, '#352d27', 26)
+  const drawHexagramPanel = (label: string, lines: Line[]) => {
+    const panelHeight = 272
+    ctx.fillStyle = 'rgba(139, 74, 60, 0.1)'
+    drawRoundedRect(ctx, padding, y, contentW, panelHeight, 26)
+    ctx.fill()
 
-  drawSectionTitle('爻辞')
-  result.entry?.yaoCi.forEach((text, index) => {
-    const line = result.lines[index]
-    const prefix = `${yaoLabel(index)}${line?.changing ? '（动）' : ''}`
-    drawParagraph(`${prefix}：${text}`, 27, line?.changing ? '#7e3f34' : '#4d433a', 12)
-  })
-  y += 8
+    ctx.fillStyle = '#5e5146'
+    ctx.font = '600 30px "Noto Serif SC", serif'
+    ctx.fillText(label, padding + 44, y + 38)
+
+    drawHexagramOnCanvas(ctx, lines, padding + 44, y + 92, contentW - 88, 18, 16)
+    y += panelHeight + 28
+  }
+
+  const drawGuaAndYao = (
+    title: string,
+    entry: HexagramEntry | null,
+    lines: Line[],
+    highlightChanging: boolean
+  ) => {
+    drawSectionTitle(title)
+    drawHexagramPanel(`${title}卦象`, lines)
+
+    drawParagraph('卦辞', 30, '#352d27', 10)
+    drawParagraph(entry?.guaCi ?? '暂无卦辞', 29, '#4d433a', 22)
+
+    drawParagraph('爻辞', 30, '#352d27', 10)
+    entry?.yaoCi.forEach((text, index) => {
+      const line = lines[index]
+      const isChanging = highlightChanging && (line?.changing ?? false)
+      const prefix = `${yaoLabel(index)}${isChanging ? '（动）' : ''}`
+      drawParagraph(`${prefix}：${text}`, 27, isChanging ? '#7e3f34' : '#4d433a', 10)
+    })
+    y += 10
+  }
+
+  drawGuaAndYao('本卦', result.entry, result.lines, true)
+
+  if (hasChangedHexagram) {
+    drawGuaAndYao('变卦', result.changedEntry, result.changedLines, false)
+  }
 
   drawSectionTitle('动爻说明')
   const movingLines = result.lines
