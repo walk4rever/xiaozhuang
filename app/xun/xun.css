@@ -2,10 +2,9 @@
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 16% 14%, rgba(255, 255, 255, 0.78), transparent 28%),
-    radial-gradient(circle at 76% 22%, rgba(126, 148, 140, 0.18), transparent 24%),
-    linear-gradient(180deg, rgba(246, 241, 232, 0.98), rgba(233, 227, 216, 0.96));
-  box-shadow: var(--shadow-hero);
+    radial-gradient(circle at 16% 14%, rgba(255, 255, 255, 0.7), transparent 28%),
+    radial-gradient(circle at 76% 22%, rgba(126, 148, 140, 0.14), transparent 24%),
+    var(--paper-hero);
 }
 
 .xun-mist-layer,
@@ -17,19 +16,19 @@
 
 .xun-mist-layer {
   background:
-    radial-gradient(circle at 18% 34%, rgba(255, 255, 255, 0.72), transparent 26%),
-    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.48), transparent 22%),
-    radial-gradient(circle at 56% 66%, rgba(255, 255, 255, 0.32), transparent 28%);
-  opacity: 0.9;
+    radial-gradient(circle at 18% 34%, rgba(255, 255, 255, 0.62), transparent 26%),
+    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.34), transparent 22%),
+    radial-gradient(circle at 56% 66%, rgba(255, 255, 255, 0.2), transparent 28%);
+  opacity: 0.86;
 }
 
 .xun-mountain-layer {
   background:
-    linear-gradient(to top, rgba(95, 124, 119, 0.18), rgba(95, 124, 119, 0) 34%),
-    radial-gradient(120% 58% at 10% 96%, rgba(126, 148, 140, 0.34) 0 32%, transparent 33%),
-    radial-gradient(90% 48% at 44% 100%, rgba(95, 124, 119, 0.23) 0 28%, transparent 29%),
-    radial-gradient(88% 44% at 78% 97%, rgba(111, 127, 111, 0.24) 0 28%, transparent 29%);
-  opacity: 0.95;
+    linear-gradient(to top, rgba(95, 124, 119, 0.16), rgba(95, 124, 119, 0) 34%),
+    radial-gradient(120% 58% at 10% 96%, rgba(126, 148, 140, 0.28) 0 32%, transparent 33%),
+    radial-gradient(90% 48% at 44% 100%, rgba(95, 124, 119, 0.18) 0 28%, transparent 29%),
+    radial-gradient(88% 44% at 78% 97%, rgba(111, 127, 111, 0.18) 0 28%, transparent 29%);
+  opacity: 0.92;
 }
 
 .seal {
@@ -52,29 +51,13 @@
   z-index: 1;
 }
 
-.xun-hero .back-link {
-  color: rgba(95, 90, 83, 0.72);
-}
-
-.xun-hero .back-link:hover {
-  color: rgba(42, 38, 34, 0.95);
-}
-
-.xun-hero .subtitle {
-  color: #6d7d77;
-}
-
-.xun-hero .description {
-  color: #5f5a53;
-}
-
 .xun-hero-quote {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
   margin: 1rem 0 0;
-  font-size: 0.92rem;
-  color: #7a746c;
+  font-size: 0.9rem;
+  color: var(--ink-2);
   letter-spacing: 0.04rem;
 }
 
@@ -82,7 +65,7 @@
   content: '';
   width: 2.4rem;
   height: 1px;
-  background: linear-gradient(90deg, rgba(95, 124, 119, 0.7), rgba(95, 124, 119, 0.08));
+  background: linear-gradient(90deg, rgba(95, 124, 119, 0.56), rgba(95, 124, 119, 0.08));
 }
 
 .xun-input-panel,
@@ -108,8 +91,8 @@
   padding: 0.82rem 1rem;
   border-radius: 16px;
   border: 1px dashed rgba(95, 124, 119, 0.38);
-  background: rgba(255, 255, 255, 0.42);
-  color: #4e5f5a;
+  background: rgba(255, 255, 255, 0.72);
+  color: #3f4f4a;
   font-size: 0.98rem;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
@@ -117,7 +100,7 @@
 
 .xun-upload-button:hover:not(:disabled) {
   border-color: rgba(95, 124, 119, 0.62);
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.92);
   transform: translateY(-1px);
 }
 
@@ -132,20 +115,20 @@
 
 .xun-upload-hint {
   margin-bottom: 0.9rem;
-  padding: 0.9rem 1rem;
+  padding: 0.95rem 1rem;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.38);
-  color: #6b655d;
-  line-height: 1.75;
-  border: 1px solid rgba(141, 119, 97, 0.08);
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--ink-1);
+  line-height: 1.78;
+  border: 1px solid var(--line-faint);
 }
 
 .xun-image-preview-wrap,
 .xun-result-image-wrap {
   overflow: hidden;
   border-radius: 18px;
-  border: 1px solid rgba(141, 119, 97, 0.14);
-  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .xun-image-preview-wrap {
@@ -169,15 +152,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.72rem 0.92rem;
-  color: #6d675f;
+  padding: 0.78rem 0.96rem;
+  color: var(--ink-1);
   font-size: 0.88rem;
 }
 
 .xun-clear-image {
   border: 0;
   background: transparent;
-  color: #5f7c77;
+  color: var(--shanshui-primary);
   cursor: pointer;
   font-size: 0.9rem;
 }
@@ -191,33 +174,34 @@
   min-height: 108px;
   padding: 1rem;
   border-radius: 18px;
-  border: 1px solid rgba(141, 119, 97, 0.18);
-  background: rgba(255, 255, 255, 0.5);
-  color: #2a2622;
+  border: 1px solid rgba(122, 104, 86, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-0);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: 1.78;
   resize: vertical;
   outline: none;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .xun-textarea::placeholder {
-  color: rgba(95, 90, 83, 0.46);
+  color: rgba(79, 72, 66, 0.42);
 }
 
 .xun-textarea:focus {
-  border-color: rgba(95, 124, 119, 0.4);
-  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(95, 124, 119, 0.38);
+  background: #fffdfa;
+  box-shadow: 0 0 0 3px rgba(95, 124, 119, 0.08);
 }
 
 .xun-button {
   width: 100%;
   margin-top: 1rem;
-  padding: 0.92rem 1rem;
+  padding: 0.94rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(95, 124, 119, 0.38);
-  background: linear-gradient(135deg, #5f7c77, #7e948c);
-  color: #f5f0e7;
+  border: 1px solid rgba(95, 124, 119, 0.42);
+  background: linear-gradient(135deg, #5f7c77, #718782);
+  color: #fbf8f1;
   font-size: 1.03rem;
   letter-spacing: 0.12rem;
   cursor: pointer;
@@ -236,38 +220,34 @@
 
 .xun-result p {
   margin: 0;
-  line-height: 1.8;
-  color: #5f5a53;
+  line-height: 1.84;
+  color: var(--ink-1);
 }
 
 .xun-quote-block {
   padding: 1.25rem 1.4rem;
-  border-left: 3px solid rgba(95, 124, 119, 0.5);
-  background: rgba(255, 255, 255, 0.38);
+  border-left: 3px solid rgba(95, 124, 119, 0.56);
+  background: rgba(255, 255, 255, 0.78);
   border-radius: 18px;
   margin-bottom: 1.2rem;
 }
 
 .xun-quote-block .quote-text {
-  font-size: 1.34rem;
-  line-height: 1.9;
+  font-size: 1.38rem;
+  line-height: 1.92;
   margin: 0 0 0.5rem;
-  color: #2a2622;
+  color: var(--ink-0);
 }
 
 .xun-quote-block .quote-source {
   font-size: 0.9rem;
-  color: #7a746c;
+  color: var(--ink-2);
   margin: 0;
 }
 
-.xun-result .section h4 {
-  color: #3b3530;
-}
-
 .xun-streaming {
-  color: #6b655d;
-  line-height: 1.85;
+  color: var(--ink-1);
+  line-height: 1.86;
   white-space: pre-wrap;
 }
 
@@ -281,7 +261,7 @@
   }
 
   .xun-upload-hint {
-    padding: 0.7rem 0.85rem;
+    padding: 0.76rem 0.85rem;
   }
 
   .xun-image-meta {
@@ -295,10 +275,10 @@
   }
 
   .xun-quote-block {
-    padding: 0.85rem 1rem;
+    padding: 0.9rem 1rem;
   }
 
   .xun-quote-block .quote-text {
-    font-size: 1.12rem;
+    font-size: 1.14rem;
   }
 }

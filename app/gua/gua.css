@@ -2,10 +2,9 @@
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.78), transparent 30%),
-    radial-gradient(circle at 72% 20%, rgba(139, 74, 60, 0.14), transparent 24%),
-    linear-gradient(180deg, rgba(246, 241, 232, 0.98), rgba(233, 227, 216, 0.96));
-  box-shadow: var(--shadow-hero);
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.7), transparent 30%),
+    radial-gradient(circle at 72% 20%, rgba(139, 74, 60, 0.1), transparent 24%),
+    var(--paper-hero);
 }
 
 .gua-mist-layer,
@@ -17,19 +16,19 @@
 
 .gua-mist-layer {
   background:
-    radial-gradient(circle at 18% 32%, rgba(255, 255, 255, 0.72), transparent 26%),
-    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.48), transparent 22%),
-    radial-gradient(circle at 56% 66%, rgba(255, 255, 255, 0.3), transparent 28%);
-  opacity: 0.9;
+    radial-gradient(circle at 18% 32%, rgba(255, 255, 255, 0.6), transparent 26%),
+    radial-gradient(circle at 78% 26%, rgba(255, 255, 255, 0.34), transparent 22%),
+    radial-gradient(circle at 56% 66%, rgba(255, 255, 255, 0.2), transparent 28%);
+  opacity: 0.86;
 }
 
 .gua-mountain-layer {
   background:
-    linear-gradient(to top, rgba(95, 124, 119, 0.16), rgba(95, 124, 119, 0) 32%),
-    radial-gradient(120% 58% at 8% 96%, rgba(126, 148, 140, 0.32) 0 32%, transparent 33%),
-    radial-gradient(90% 48% at 42% 100%, rgba(95, 124, 119, 0.22) 0 28%, transparent 29%),
-    radial-gradient(88% 44% at 80% 97%, rgba(111, 127, 111, 0.22) 0 28%, transparent 29%);
-  opacity: 0.95;
+    linear-gradient(to top, rgba(95, 124, 119, 0.14), rgba(95, 124, 119, 0) 32%),
+    radial-gradient(120% 58% at 8% 96%, rgba(126, 148, 140, 0.26) 0 32%, transparent 33%),
+    radial-gradient(90% 48% at 42% 100%, rgba(95, 124, 119, 0.18) 0 28%, transparent 29%),
+    radial-gradient(88% 44% at 80% 97%, rgba(111, 127, 111, 0.18) 0 28%, transparent 29%);
+  opacity: 0.92;
 }
 
 .seal {
@@ -52,20 +51,8 @@
   z-index: 1;
 }
 
-.gua-hero .back-link {
-  color: rgba(95, 90, 83, 0.72);
-}
-
-.gua-hero .back-link:hover {
-  color: rgba(42, 38, 34, 0.95);
-}
-
 .gua-hero .subtitle {
   color: #7d675f;
-}
-
-.gua-hero .description {
-  color: #5f5a53;
 }
 
 .gua-hero-quote {
@@ -73,8 +60,8 @@
   align-items: center;
   gap: 0.65rem;
   margin: 1rem 0 0;
-  font-size: 0.92rem;
-  color: #7a746c;
+  font-size: 0.9rem;
+  color: var(--ink-2);
   letter-spacing: 0.04rem;
 }
 
@@ -82,7 +69,7 @@
   content: '';
   width: 2.4rem;
   height: 1px;
-  background: linear-gradient(90deg, rgba(139, 74, 60, 0.6), rgba(139, 74, 60, 0.08));
+  background: linear-gradient(90deg, rgba(139, 74, 60, 0.5), rgba(139, 74, 60, 0.08));
 }
 
 .cast-panel,
@@ -96,20 +83,20 @@
 
 .panel-tip {
   margin: 0 0 1.2rem;
-  color: #6b655d;
-  line-height: 1.75;
+  color: var(--ink-1);
+  line-height: 1.78;
 }
 
 .cast-button {
   width: 100%;
   margin-top: 1.2rem;
-  padding: 0.9rem 1rem;
+  padding: 0.92rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(139, 74, 60, 0.32);
-  background: linear-gradient(135deg, #8b4a3c, #a58a6a);
-  color: #f7efe3;
+  border: 1px solid rgba(139, 74, 60, 0.34);
+  background: linear-gradient(135deg, #8b4a3c, #9c7b5e);
+  color: #fbf8f1;
   font-size: 1rem;
-  letter-spacing: 0.18rem;
+  letter-spacing: 0.14rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -120,13 +107,13 @@
 
 .retry-button {
   margin-top: 1.2rem;
-  padding: 0.55rem 1.4rem;
+  padding: 0.56rem 1.4rem;
   border-radius: 999px;
   border: 1px solid rgba(139, 74, 60, 0.26);
   background: rgba(139, 74, 60, 0.08);
   color: #7a4d43;
   font-size: 0.9rem;
-  letter-spacing: 0.1rem;
+  letter-spacing: 0.08rem;
   transition: background 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
@@ -189,18 +176,18 @@
 
 .text-block h3 {
   margin-top: 0;
-  font-size: 1.5rem;
-  color: #2a2622;
+  font-size: 1.52rem;
+  color: var(--ink-0);
 }
 
 .quote {
   padding: 1rem 1.2rem;
-  border-left: 3px solid rgba(139, 74, 60, 0.45);
-  background: rgba(255, 255, 255, 0.38);
+  border-left: 3px solid rgba(139, 74, 60, 0.5);
+  background: rgba(255, 255, 255, 0.78);
   border-radius: 16px;
   margin-bottom: 1.4rem;
-  line-height: 1.8;
-  color: #5f5a53;
+  line-height: 1.84;
+  color: var(--ink-1);
 }
 
 .section ul {
@@ -212,16 +199,16 @@
 }
 
 .section li {
-  padding: 0.6rem 0.8rem;
-  background: rgba(255, 255, 255, 0.38);
+  padding: 0.62rem 0.82rem;
+  background: rgba(255, 255, 255, 0.74);
   border-radius: 12px;
-  border: 1px solid rgba(141, 119, 97, 0.08);
-  line-height: 1.7;
-  color: #5f5a53;
+  border: 1px solid var(--line-faint);
+  line-height: 1.74;
+  color: var(--ink-1);
 }
 
 .changing-yao {
-  background: rgba(139, 74, 60, 0.06);
+  background: rgba(139, 74, 60, 0.07);
   border-color: rgba(139, 74, 60, 0.18);
   border-left: 3px solid rgba(139, 74, 60, 0.45);
 }
@@ -232,7 +219,7 @@
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: rgba(139, 74, 60, 0.12);
-  border: 1px solid rgba(139, 74, 60, 0.24);
+  border: 1px solid rgba(139, 74, 60, 0.22);
   color: #8b4a3c;
   font-size: 0.72rem;
   letter-spacing: 0.05rem;
@@ -243,13 +230,8 @@
 .guidance-panel p,
 .guidance-panel .section p {
   margin: 0;
-  line-height: 1.8;
-  color: #5f5a53;
-}
-
-.guidance-panel .section h4,
-.result-panel .section h4 {
-  color: #3b3530;
+  line-height: 1.84;
+  color: var(--ink-1);
 }
 
 .cast-panel {
@@ -288,7 +270,7 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  box-shadow: 0 0 32px rgba(139, 74, 60, 0.08);
+  box-shadow: 0 0 24px rgba(139, 74, 60, 0.06);
   animation: spin 3s linear infinite;
   display: block;
   overflow: visible;
@@ -301,7 +283,7 @@
 }
 
 .subtle {
-  color: #7a746c;
+  color: var(--ink-2);
 }
 
 @media (max-width: 960px) {
@@ -329,7 +311,7 @@
   }
 
   .quote {
-    padding: 0.65rem 0.75rem;
+    padding: 0.7rem 0.8rem;
   }
 
   .section ul {
@@ -337,7 +319,7 @@
   }
 
   .section li {
-    padding: 0.45rem 0.6rem;
+    padding: 0.46rem 0.62rem;
   }
 
   .result-body {
@@ -364,7 +346,7 @@
 
   .cast-button {
     font-size: 0.95rem;
-    letter-spacing: 0.12rem;
+    letter-spacing: 0.1rem;
     padding: 0.75rem 0.9rem;
   }
 
