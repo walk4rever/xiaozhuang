@@ -739,16 +739,19 @@ export default function GuaClient() {
     : { items: [], plain: '' }
 
   return (
-    <div className="app">
-      <header className="hero">
+    <div className="app gua-app">
+      <header className="hero gua-hero">
+        <div className="gua-mist-layer" aria-hidden="true" />
+        <div className="gua-mountain-layer" aria-hidden="true" />
         <div className="seal">卦</div>
-        <div className="hero-text">
+        <div className="hero-text gua-hero-text">
           <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">静心 · 观变 · 明行</p>
           <h1>问卦</h1>
           <p className="description">
             以阴阳为镜，照见内心之事。起卦前请平静情绪，想清楚所求，默念三遍即可。
           </p>
+          <p className="gua-hero-quote">山高月小，水落石出</p>
         </div>
       </header>
 

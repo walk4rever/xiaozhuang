@@ -4,7 +4,7 @@ import styles from './page.module.css'
 const features = [
   {
     href: '/xun',
-    icon: '🌅',
+    icon: '寻',
     title: '寻句',
     desc: '描述一个场景，或上传一张照片，帮你找到最贴切的那句话',
     ready: true,
@@ -12,7 +12,7 @@ const features = [
   },
   {
     href: '/gua',
-    icon: '🔮',
+    icon: '卦',
     title: '问卦',
     desc: '当你想不明白时，以周易智慧回应此刻的困惑',
     ready: true,
@@ -20,21 +20,21 @@ const features = [
   },
   {
     href: '#',
-    icon: '🖊️',
+    icon: '写',
     title: '仿写',
     desc: '借古人的笔意，替你把心里的话写出来',
     ready: false,
   },
   {
     href: '#',
-    icon: '📖',
+    icon: '读',
     title: '秒读',
     desc: '任何古文，一键白话，快速读懂其中意思',
     ready: false,
   },
   {
     href: '#',
-    icon: '📚',
+    icon: '义',
     title: '精读',
     desc: '围绕一段经典，展开更深入的背景与意涵',
     ready: false,
@@ -43,13 +43,15 @@ const features = [
 
 export default function Home() {
   return (
-    <div className="app">
+    <div className={`app ${styles.homeApp}`}>
       <header className={`hero ${styles.homeHero}`}>
+        <div className={styles.mistLayer} aria-hidden="true" />
+        <div className={styles.mountainLayer} aria-hidden="true" />
         <div className={styles.seal}>庄</div>
-        <div className="hero-text">
-          <p className="subtitle">表达 · 照见 · 中文之美</p>
-          <h1>小庄</h1>
-          <p className="description">
+        <div className={`hero-text ${styles.homeText}`}>
+          <p className={styles.subtitle}>表达 · 照见 · 中文之美</p>
+          <h1 className={styles.title}>小庄</h1>
+          <p className={styles.description}>
             当你说不清、想不明、写不出的时候，小庄帮你找到最贴切的那句话。
           </p>
           <p className={styles.heroQuote}>天地有大美而不言 —— 庄子</p>
@@ -74,12 +76,12 @@ export default function Home() {
           >
             <span className={styles.cardIcon}>{f.icon}</span>
             <div>
-              <h2>
+              <h2 className={styles.cardTitle}>
                 {f.title}
                 {f.emphasis && <span className={styles.emphasis}>{f.emphasis}</span>}
                 {!f.ready && <span className={styles.badge}>即将推出</span>}
               </h2>
-              <p>{f.desc}</p>
+              <p className={styles.cardDesc}>{f.desc}</p>
             </div>
           </Link>
         ))}
