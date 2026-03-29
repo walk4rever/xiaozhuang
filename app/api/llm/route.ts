@@ -79,7 +79,10 @@ const classifyProxyError = (error: unknown) => {
       status: 504,
       code: 'upstream_timeout',
       message: '模型服务响应超时，请稍后再试。',
-      retryable: true,
+      // Edge runtime has a 30s maxDuration on Hobby. Retrying after a 25s
+      // upstream timeout almost guarantees the whole function times out again
+      // before we can return a graceful error to the client.
+      retryable: false,
     }
   }
 
