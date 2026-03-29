@@ -16,8 +16,8 @@ const jsonResponse = (body: Record<string, string>, status: number) =>
 
 const encoder = new TextEncoder()
 const UPSTREAM_TIMEOUT_MS = 25000
-const UPSTREAM_STREAMING_TIMEOUT_MS = 50000
-const UPSTREAM_VISION_STREAMING_TIMEOUT_MS = 55000
+const UPSTREAM_STREAMING_TIMEOUT_MS = 56000
+const UPSTREAM_VISION_STREAMING_TIMEOUT_MS = 57000
 const UPSTREAM_RETRY_DELAY_MS = 600
 const isJsonResponse = (contentType: string | null) =>
   (contentType ?? '').toLowerCase().includes('application/json')
