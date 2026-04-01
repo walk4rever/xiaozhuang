@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { DailyRunWithPassage } from '@/lib/du-server'
+import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 
 interface Props {
   run: DailyRunWithPassage
@@ -22,17 +23,6 @@ const renderSimpleMarkdown = (text: string): string => {
 // ---------------------------------------------------------------------------
 // Canvas share card
 // ---------------------------------------------------------------------------
-const CARD_W = 1080
-const SITE_URL = 'https://xz.air7.fun'
-const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
-
-const loadImage = (src: string) =>
-  new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('图片加载失败'))
-    img.src = src
-  })
 
 const SHARE_ICON =
   'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
@@ -75,8 +65,8 @@ const generateDuShareCard = async (run: DailyRunWithPassage, date: string): Prom
   const payload = passage.payload!
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
 
-  const w = CARD_W
-  const margin = 88
+  const w = SHARE_WIDTH
+  const margin = SHARE_MARGIN
   const maxW = w - margin * 2
 
   // Font sizes
@@ -88,8 +78,6 @@ const generateDuShareCard = async (run: DailyRunWithPassage, date: string): Prom
   const contentLineH = contentSize + 28
   const insightSize = 34
   const insightLineH = insightSize + 26
-  const footerSize = 28
-
   const sectionGap = 64
   const labelGap = 16
 
@@ -111,8 +99,7 @@ const generateDuShareCard = async (run: DailyRunWithPassage, date: string): Prom
   const contentH = section1H + sectionGap + section2H + sectionGap + section3H
 
   const padding = 120
-  const footerH = 80
-  const h = Math.min(1920, contentH + padding * 2 + footerH)
+  const h = Math.min(1920, contentH + padding * 2 + SHARE_QR_SIZE + 40)
 
   // Draw pass
   const canvas = document.createElement('canvas')
@@ -186,21 +173,7 @@ const generateDuShareCard = async (run: DailyRunWithPassage, date: string): Prom
   }
 
   // ── Footer ────────────────────────────────────────────
-  const footerY = h - padding / 2 - footerSize
-  ctx.fillStyle = '#96836e'
-  ctx.font = `400 ${footerSize}px "Noto Serif SC", serif`
-  ctx.fillText(`小庄 · 慢读  ${SITE_URL}`, margin, footerY)
-
-  // ── QR code ───────────────────────────────────────────
-  try {
-    const qrSize = 100
-    const qrImage = await loadImage(SHARE_QR_PATH)
-    ctx.globalAlpha = 0.45
-    ctx.drawImage(qrImage, w - margin - qrSize, h - margin / 2 - qrSize, qrSize, qrSize)
-    ctx.globalAlpha = 1
-  } catch {
-    // QR 加载失败不影响整体生成
-  }
+  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '慢读')
 
   return canvasToBlob(canvas)
 }

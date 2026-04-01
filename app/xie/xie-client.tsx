@@ -8,16 +8,13 @@ import {
   pickRandomStyleAndAuthor,
   XIE_YANGMING_SYSTEM_PROMPT,
 } from '@/data/xie-yangming'
+import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 
 type XieOutput = {
   styleUsed: string
   authorUsed: string
   text: string
 }
-
-const SHARE_CARD_WIDTH = 1080
-const SHARE_DEST_URL = 'https://xz.air7.fun'
-const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const SHARE_ICON_PATH =
   'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
@@ -44,13 +41,6 @@ const parseXieOutput = (raw: string): XieOutput | null => {
   }
 }
 
-const loadImage = (src: string) =>
-  new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('图片加载失败'))
-    img.src = src
-  })
 
 const canvasToBlob = (canvas: HTMLCanvasElement, quality: number) =>
   new Promise<Blob>((resolve, reject) => {
@@ -186,8 +176,8 @@ const generateXieShareCard = async (
   styleBio: string,
   authorBio: string
 ) => {
-  const w = SHARE_CARD_WIDTH   // 1080
-  const margin = 90
+  const w = SHARE_WIDTH
+  const margin = SHARE_MARGIN
   const maxW = w - margin * 2
 
   // Type scale — larger for comfortable mobile reading
@@ -221,8 +211,7 @@ const generateXieShareCard = async (
 
   // Dynamic canvas height: content + equal top/bottom padding + QR area
   const padding = 130
-  const qrArea = 130
-  const h = Math.min(1920, contentH + padding * 2 + qrArea)
+  const h = Math.min(1920, contentH + padding * 2 + SHARE_QR_SIZE + 40)
 
   // ── Draw pass ───────────────────────────────────────────
   const canvas = document.createElement('canvas')
@@ -286,22 +275,7 @@ const generateXieShareCard = async (
 
   drawKnowledgeEntry(ctx, authorUsed, authorBio, margin, y, maxW, bioNameSize, bioLineH)
 
-  // QR — anchored to canvas bottom
-  try {
-    const qrSize = 100
-    const qrImage = await loadImage(SHARE_QR_PATH)
-    ctx.globalAlpha = 0.45
-    ctx.drawImage(qrImage, w - margin - qrSize, h - margin - qrSize, qrSize, qrSize)
-    ctx.globalAlpha = 1
-  } catch {
-    ctx.fillStyle = '#a0907e'
-    ctx.font = '400 20px "Noto Serif SC", serif'
-    ctx.textAlign = 'right'
-    ctx.textBaseline = 'bottom'
-    ctx.fillText(SHARE_DEST_URL, w - margin, h - margin)
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-  }
+  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '仿写')
 
   ctx.textBaseline = 'alphabetic'
   return canvasToBlob(canvas, 0.92)

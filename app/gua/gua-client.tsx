@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import zhouyi from '@/data/zhouyi.json'
 import Link from 'next/link'
+import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 
 type HexagramEntry = {
   id: number
@@ -172,10 +173,7 @@ const getHexagramName = (entry: HexagramEntry | null) => {
 
 const SHARE_ICON_PATH =
   'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
-const SHARE_CARD_WIDTH = 1080
 const SHARE_CARD_MAX_HEIGHT = 5600
-const SHARE_DEST_URL = 'https://xz.air7.fun'
-const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const buildInterpretationPrompt = (
   lines: Line[],
@@ -441,13 +439,6 @@ const wrapCanvasText = (
   return lines
 }
 
-const loadImage = (src: string) =>
-  new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('图片加载失败'))
-    img.src = src
-  })
 
 const canvasToBlob = (canvas: HTMLCanvasElement, quality: number) =>
   new Promise<Blob>((resolve, reject) => {
@@ -515,14 +506,14 @@ const drawHexagramOnCanvas = (
 
 const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
   const canvas = document.createElement('canvas')
-  canvas.width = SHARE_CARD_WIDTH
+  canvas.width = SHARE_WIDTH
   canvas.height = SHARE_CARD_MAX_HEIGHT
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('分享图生成失败，请稍后再试。')
 
   const w = canvas.width
   const h = canvas.height
-  const padding = 76
+  const padding = SHARE_MARGIN
   const contentW = w - padding * 2
 
   const bg = ctx.createLinearGradient(0, 0, 0, h)
@@ -622,7 +613,6 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
     drawParagraph(interpretation.plain || result.interpretation || '暂无解读', 27, '#4d433a', 14)
   }
 
-  const qrSize = 118
   const footerY = y + 24
   ctx.strokeStyle = 'rgba(139, 74, 60, 0.2)'
   ctx.lineWidth = 1.5
@@ -631,32 +621,18 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
   ctx.lineTo(w - padding, footerY)
   ctx.stroke()
 
-  y = footerY + 34
+  const footerTopY = footerY + 34
+  await drawShareFooter(ctx, w, footerTopY, '问卦')
 
-  ctx.fillStyle = '#96836e'
-  ctx.font = '400 26px "Noto Serif SC", serif'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(`小庄·问卦  ${SHARE_DEST_URL}`, padding, y + qrSize / 2)
-  ctx.textBaseline = 'top'
-
-  try {
-    const qrImage = await loadImage(SHARE_QR_PATH)
-    ctx.globalAlpha = 0.45
-    ctx.drawImage(qrImage, w - padding - qrSize, y, qrSize, qrSize)
-    ctx.globalAlpha = 1
-  } catch {
-    // QR 加载失败不影响整体生成
-  }
-
-  y += qrSize + 34
+  y = footerTopY + SHARE_QR_SIZE + 34
 
   const finalHeight = Math.max(1700, Math.min(SHARE_CARD_MAX_HEIGHT, y))
   const output = document.createElement('canvas')
-  output.width = SHARE_CARD_WIDTH
+  output.width = SHARE_WIDTH
   output.height = finalHeight
   const outputCtx = output.getContext('2d')
   if (!outputCtx) throw new Error('分享图生成失败，请稍后再试。')
-  outputCtx.drawImage(canvas, 0, 0, SHARE_CARD_WIDTH, finalHeight, 0, 0, SHARE_CARD_WIDTH, finalHeight)
+  outputCtx.drawImage(canvas, 0, 0, SHARE_WIDTH, finalHeight, 0, 0, SHARE_WIDTH, finalHeight)
 
   return await canvasToBlob(output, 0.92)
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 
 type ParsedResult = {
   quote: string
@@ -51,10 +52,7 @@ const MAX_IMAGE_EDGE = 800
 const MIN_IMAGE_EDGE = 14
 const INITIAL_JPEG_QUALITY = 0.72
 const MIN_JPEG_QUALITY = 0.40
-const SHARE_CARD_WIDTH = 1080
 const SHARE_CARD_HEIGHT = 1440
-const SHARE_DEST_URL = 'https://xz.air7.fun'
-const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const extractJsonBlock = (text: string) => {
   const trimmed = text.trim()
@@ -203,7 +201,7 @@ const generateShareCard = async (
   template: ShareTemplate
 ) => {
   const canvas = document.createElement('canvas')
-  canvas.width = SHARE_CARD_WIDTH
+  canvas.width = SHARE_WIDTH
   canvas.height = SHARE_CARD_HEIGHT
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('分享图生成失败，请重试。')
@@ -211,7 +209,7 @@ const generateShareCard = async (
   const w = canvas.width
   const h = canvas.height
   const usePhotoTemplate = template === 'photo' && Boolean(image)
-  const margin = 80
+  const margin = SHARE_MARGIN
 
   // Background
   const bg = ctx.createLinearGradient(0, 0, 0, h)
@@ -324,22 +322,7 @@ const generateShareCard = async (
     y += interpretLineH
   }
 
-  // QR: no box, just semi-transparent
-  try {
-    const qrSize = 96
-    const qrImage = await loadImage(SHARE_QR_PATH)
-    ctx.globalAlpha = 0.45
-    ctx.drawImage(qrImage, w - margin - qrSize, h - margin - qrSize, qrSize, qrSize)
-    ctx.globalAlpha = 1
-  } catch {
-    ctx.fillStyle = '#a0907e'
-    ctx.font = '400 18px "Noto Serif SC", serif'
-    ctx.textAlign = 'right'
-    ctx.textBaseline = 'bottom'
-    ctx.fillText(SHARE_DEST_URL, w - margin, h - margin)
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'top'
-  }
+  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '寻句')
 
   ctx.textBaseline = 'alphabetic'
 
