@@ -174,7 +174,7 @@ const SHARE_ICON_PATH =
   'M15 8a3 3 0 1 0-2.83-4H12a3 3 0 0 0 .17 1l-5.1 2.9a3 3 0 0 0-4.24 2.8 3 3 0 0 0 .06.6l5.05 2.87A3 3 0 0 0 8 15a3 3 0 1 0 .17-1l-5.1-2.9a3 3 0 0 0 0-1.2l5.1-2.9A3 3 0 1 0 15 8Z'
 const SHARE_CARD_WIDTH = 1080
 const SHARE_CARD_MAX_HEIGHT = 5600
-const SHARE_DEST_URL = 'https://xz.air7.fun/gua'
+const SHARE_DEST_URL = 'https://xz.air7.fun'
 const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
 const buildInterpretationPrompt = (
@@ -512,10 +512,6 @@ const drawHexagramOnCanvas = (
   })
 }
 
-const formatShareTimestamp = (date: Date) => {
-  const pad = (value: number) => String(value).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
 
 const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
   const canvas = document.createElement('canvas')
@@ -538,11 +534,6 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   ctx.textBaseline = 'top'
   let y = 72
-
-  ctx.fillStyle = '#8b4a3c'
-  ctx.font = '600 30px "Noto Serif SC", serif'
-  ctx.fillText('小庄 · 问卦分享', padding, y)
-  y += 56
 
   const baseName = getHexagramName(result.entry) || '本卦'
   const changedName = getHexagramName(result.changedEntry)
@@ -642,21 +633,19 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   y = footerY + 34
 
-  ctx.fillStyle = '#665a4f'
-  ctx.font = '400 24px "Noto Serif SC", serif'
-  ctx.fillText(`生成时间：${formatShareTimestamp(new Date())}`, padding, y + 24)
+  ctx.fillStyle = '#96836e'
+  ctx.font = '400 26px "Noto Serif SC", serif'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(`小庄·问卦  ${SHARE_DEST_URL}`, padding, y + qrSize / 2)
+  ctx.textBaseline = 'top'
 
   try {
     const qrImage = await loadImage(SHARE_QR_PATH)
-    ctx.globalAlpha = 0.86
+    ctx.globalAlpha = 0.45
     ctx.drawImage(qrImage, w - padding - qrSize, y, qrSize, qrSize)
     ctx.globalAlpha = 1
   } catch {
-    ctx.fillStyle = '#8f8071'
-    ctx.font = '400 20px "Noto Serif SC", serif'
-    ctx.textAlign = 'right'
-    ctx.fillText(SHARE_DEST_URL, w - padding, y + 62)
-    ctx.textAlign = 'left'
+    // QR 加载失败不影响整体生成
   }
 
   y += qrSize + 34
