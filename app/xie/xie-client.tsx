@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   buildXieYangmingUserPrompt,
+  getKnowledgeBit,
   pickRandomStyleAndAuthor,
   XIE_YANGMING_SYSTEM_PROMPT,
 } from '@/data/xie-yangming'
@@ -12,8 +13,6 @@ type XieOutput = {
   styleUsed: string
   authorUsed: string
   text: string
-  plain: string
-  coreIdea: string
 }
 
 const extractJsonBlock = (text: string) => {
@@ -31,7 +30,7 @@ const parseXieOutput = (raw: string): XieOutput | null => {
   if (!candidate) return null
   try {
     const parsed = JSON.parse(candidate) as XieOutput
-    if (!parsed.styleUsed || !parsed.authorUsed || !parsed.text || !parsed.plain || !parsed.coreIdea) return null
+    if (!parsed.styleUsed || !parsed.authorUsed || !parsed.text) return null
     return parsed
   } catch {
     return null
@@ -55,7 +54,7 @@ const requestXie = async (
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.55,
-      max_tokens: 640,
+      max_tokens: 480,
     }),
   })
 
@@ -85,10 +84,13 @@ const requestXie = async (
 export default function XieClient() {
   const [intent, setIntent] = useState('')
   const [rawOutput, setRawOutput] = useState('')
+  const [pickedStyle, setPickedStyle] = useState('')
+  const [pickedAuthor, setPickedAuthor] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const parsed = rawOutput ? parseXieOutput(rawOutput) : null
+  const knowledge = pickedStyle && pickedAuthor ? getKnowledgeBit(pickedStyle, pickedAuthor) : null
 
   const handleSubmit = async () => {
     if (!intent.trim() || isLoading) return
@@ -97,6 +99,8 @@ export default function XieClient() {
     setRawOutput('')
 
     const { style, author } = pickRandomStyleAndAuthor()
+    setPickedStyle(style)
+    setPickedAuthor(author)
 
     try {
       const final = await requestXie(intent.trim(), style, author, (partial) => {
@@ -165,11 +169,13 @@ export default function XieClient() {
             <p className="xie-main-text">{parsed.text}</p>
           </div>
 
-          <div className="section">
-            <h4>义理释义</h4>
-            <p>【义理核心】{parsed.coreIdea}</p>
-            <p>{parsed.plain}</p>
-          </div>
+          {knowledge ? (
+            <div className="section">
+              <h4>小知识</h4>
+              <p><strong>{parsed.styleUsed}</strong>　{knowledge.styleBio}</p>
+              <p><strong>{parsed.authorUsed}</strong>　{knowledge.authorBio}</p>
+            </div>
+          ) : null}
         </section>
       ) : null}
     </div>
