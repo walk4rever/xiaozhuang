@@ -1,0 +1,27 @@
+name: 慢读 · 每日选文
+
+on:
+  schedule:
+    # 每天北京时间 01:00 (UTC 17:00 前一天)
+    - cron: '0 17 * * *'
+  workflow_dispatch:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 触发慢读准备接口
+        run: |
+          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.XIAOZHUANG_URL }}/api/du/cron/prepare" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -d '{}')
+          echo "HTTP status: $response"
+          cat /tmp/response.json
+          if [ "$response" -ne 200 ] && [ "$response" -ne 208 ]; then
+            echo "❌ 准备失败，状态码: $response"
+            exit 1
+          fi
+          echo "✅ 准备完成"

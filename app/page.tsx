@@ -27,11 +27,12 @@ const features = [
     emphasis: '新功能',
   },
   {
-    href: '#',
+    href: '/du',
     icon: '读',
-    title: '秒读',
-    desc: '任何古文，一键白话，快速读懂其中意思',
-    ready: false,
+    title: '慢读',
+    desc: '订阅每日古文慢读邮件，每天一封，慢慢读懂一段经典',
+    ready: true,
+    emphasis: '每日订阅',
   },
 ]
 

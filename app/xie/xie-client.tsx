@@ -16,7 +16,6 @@ type XieOutput = {
 }
 
 const SHARE_CARD_WIDTH = 1080
-const SHARE_CARD_HEIGHT = 1440
 const SHARE_DEST_URL = 'https://xz.air7.fun'
 const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
 
@@ -127,7 +126,7 @@ const measureKnowledgeEntry = (
   return lineCount
 }
 
-// Draw "Name　bio text" inline: name is bold, bio wraps with full-width indent after first line.
+// Draw "Name bio text" inline: name is bold, bio wraps with indent after first line.
 // Returns the y position after the last drawn line (i.e. next available y).
 const drawKnowledgeEntry = (
   ctx: CanvasRenderingContext2D,
@@ -509,8 +508,8 @@ export default function XieClient() {
           {knowledge ? (
             <div className="section">
               <h4>小知识</h4>
-              <p><strong>{parsed.styleUsed}</strong>　{knowledge.styleBio}</p>
-              <p><strong>{parsed.authorUsed}</strong>　{knowledge.authorBio}</p>
+              <p><strong>{parsed.styleUsed}</strong>{' '}{knowledge.styleBio}</p>
+              <p><strong>{parsed.authorUsed}</strong>{' '}{knowledge.authorBio}</p>
             </div>
           ) : null}
 
