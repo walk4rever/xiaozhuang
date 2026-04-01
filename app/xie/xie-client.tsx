@@ -275,7 +275,7 @@ const generateXieShareCard = async (
 
   drawKnowledgeEntry(ctx, authorUsed, authorBio, margin, y, maxW, bioNameSize, bioLineH)
 
-  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '畅怀')
+  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '述怀')
 
   ctx.textBaseline = 'alphabetic'
   return canvasToBlob(canvas, 0.92)
@@ -385,7 +385,7 @@ export default function XieClient() {
       })
       setRawOutput(final)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '畅怀失败，请稍后重试。')
+      setError(err instanceof Error ? err.message : '述怀失败，请稍后重试。')
     } finally {
       setIsLoading(false)
     }
@@ -433,7 +433,7 @@ export default function XieClient() {
         <div className="hero-text xie-hero-text">
           <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">立诚 · 明心 · 见行</p>
-          <h1>畅怀</h1>
+          <h1>述怀</h1>
           <p className="description">
             从楚辞、道家、史传、词、禅语、唐宋古文、骈文、心学八种传统中随机取法，指定人物语感，写成古典短章。
           </p>
@@ -451,7 +451,7 @@ export default function XieClient() {
         />
 
         <button className="xie-submit" onClick={handleSubmit} disabled={isLoading || !intent.trim()}>
-          {isLoading ? '畅怀中…' : '随机取法，生成古典短章'}
+          {isLoading ? '述怀中…' : '随机取法，生成古典短章'}
         </button>
       </section>
 

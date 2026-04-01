@@ -23,7 +23,7 @@ const loadQrImage = (src: string): Promise<HTMLImageElement> =>
  * Draw the unified footer: brand text bottom-left, QR code bottom-right.
  *
  * @param footerTopY  Top edge of the footer area (= where QR top starts).
- * @param moduleLabel Short module name, e.g. '问心' | '畅怀' | '寻章' | '慢读'
+ * @param moduleLabel Short module name, e.g. '问心' | '述怀' | '寻章' | '慢读'
  */
 export const drawShareFooter = async (
   ctx: CanvasRenderingContext2D,

@@ -21,7 +21,7 @@ const features = [
   {
     href: '/xie',
     icon: '怀',
-    title: '畅怀',
+    title: '述怀',
     desc: '借古人的笔意，替你把心里的话写出来',
     ready: true,
     emphasis: '新功能',
