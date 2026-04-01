@@ -72,6 +72,12 @@ export default function Home() {
           </Link>
         ))}
       </section>
+
+      <footer className={styles.footer}>
+        <p className={styles.footerBrand}>小庄</p>
+        <p className={styles.footerTagline}>借古人的话，说今天的心</p>
+        <p className={styles.footerCopy}>© 2026 小庄 · <a href="https://xz.air7.fun" className={styles.footerLink}>xz.air7.fun</a></p>
+      </footer>
     </div>
   )
 }

@@ -157,6 +157,44 @@
   color: #7d6e5f;
 }
 
+.footer {
+  margin-top: 2.5rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border-top: 1px solid var(--line-soft);
+}
+
+.footerBrand {
+  margin: 0 0 0.3rem;
+  font-family: 'Ma Shan Zheng', cursive;
+  font-size: 1.5rem;
+  color: var(--ink-0);
+  letter-spacing: 0.12rem;
+}
+
+.footerTagline {
+  margin: 0 0 0.8rem;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  letter-spacing: 0.06rem;
+}
+
+.footerCopy {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-3, #b0a898);
+  letter-spacing: 0.03rem;
+}
+
+.footerLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  color: var(--shanshui-primary);
+}
+
 @media (max-width: 480px) {
   .homeHero {
     padding: 1rem;
