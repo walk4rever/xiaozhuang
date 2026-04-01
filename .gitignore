@@ -12,6 +12,10 @@ dist
 # env files
 .env*.local
 
+# internal project docs
+PRODUCT.md
+TODO.md
+
 # misc
 .DS_Store
 *.pem
