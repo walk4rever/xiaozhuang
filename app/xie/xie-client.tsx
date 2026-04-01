@@ -4,13 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   buildXieYangmingUserPrompt,
-  pickRandomStyle,
+  pickRandomStyleAndAuthor,
   XIE_YANGMING_SYSTEM_PROMPT,
-  type XieStyle,
 } from '@/data/xie-yangming'
 
 type XieOutput = {
   styleUsed: string
+  authorUsed: string
   text: string
   plain: string
   coreIdea: string
@@ -31,7 +31,7 @@ const parseXieOutput = (raw: string): XieOutput | null => {
   if (!candidate) return null
   try {
     const parsed = JSON.parse(candidate) as XieOutput
-    if (!parsed.styleUsed || !parsed.text || !parsed.plain || !parsed.coreIdea) return null
+    if (!parsed.styleUsed || !parsed.authorUsed || !parsed.text || !parsed.plain || !parsed.coreIdea) return null
     return parsed
   } catch {
     return null
@@ -40,10 +40,11 @@ const parseXieOutput = (raw: string): XieOutput | null => {
 
 const requestXie = async (
   intent: string,
-  style: XieStyle,
+  style: string,
+  author: string,
   onChunk?: (text: string) => void
 ) => {
-  const userPrompt = buildXieYangmingUserPrompt({ intent, style })
+  const userPrompt = buildXieYangmingUserPrompt({ intent, style, author })
 
   const response = await fetch('/api/llm', {
     method: 'POST',
@@ -95,10 +96,10 @@ export default function XieClient() {
     setIsLoading(true)
     setRawOutput('')
 
-    const style = pickRandomStyle()
+    const { style, author } = pickRandomStyleAndAuthor()
 
     try {
-      const final = await requestXie(intent.trim(), style, (partial) => {
+      const final = await requestXie(intent.trim(), style, author, (partial) => {
         setRawOutput(partial)
       })
       setRawOutput(final)
@@ -155,8 +156,8 @@ export default function XieClient() {
       {parsed ? (
         <section className="panel xie-result">
           <div className="section">
-            <h4>模仿风格</h4>
-            <p>{parsed.styleUsed}</p>
+            <h4>文体 · 人物</h4>
+            <p>{parsed.styleUsed} · {parsed.authorUsed}</p>
           </div>
 
           <div className="section">
