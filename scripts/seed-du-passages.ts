@@ -75,7 +75,7 @@ function getDifficulty(origin: string): number {
   return 1
 }
 
-const MAX_CHUNK = 450
+const MAX_CHUNK = 150
 const MIN_CHUNK = 80
 
 function splitLongParagraph(para: string): string[] {

@@ -34,7 +34,7 @@ interface Passage {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-const MAX_CHUNK = 450    // chars — target upper bound per record
+const MAX_CHUNK = 150    // chars — target upper bound per record
 const MIN_CHUNK = 80     // chars — any chunk shorter than this gets merged
 
 // ---------------------------------------------------------------------------
@@ -178,9 +178,12 @@ function parse(filePath: string): Passage[] {
   let rawLines: string[] = []
 
   const flushEntry = () => {
+    const lines = rawLines
+    rawLines = []
+
     if (!currentOrigin) return
 
-    const paragraphs = rawLines
+    const paragraphs = lines
       // eslint-disable-next-line no-irregular-whitespace
       .map((l) => l.replace(/^[\s　]+/, '').replace(/[\s　]+$/, ''))
       .filter((l) => l.length > 0)
@@ -198,8 +201,6 @@ function parse(filePath: string): Passage[] {
         difficulty: getDifficulty(currentOrigin),
       })
     }
-
-    rawLines = []
   }
 
   for (const rawLine of lines) {
