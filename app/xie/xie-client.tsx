@@ -195,7 +195,7 @@ const generateXieShareCard = async (
   const quoteLineH = quoteSize + 34
   const bioNameSize = 26     // 人物/文体 name in 小知识
   const bioTextSize = 23     // bio body text
-  const bioLineH = bioTextSize + 14
+  const bioLineH = bioTextSize + 22
 
   const maxW = w - margin * 2
 
