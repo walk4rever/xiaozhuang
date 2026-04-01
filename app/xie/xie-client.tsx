@@ -123,75 +123,92 @@ const generateXieShareCard = async (
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, w, h)
 
-  // Subtle warm glow
-  const glow = ctx.createRadialGradient(w * 0.2, h * 0.28, 20, w * 0.2, h * 0.28, 520)
-  glow.addColorStop(0, 'rgba(255,255,255,0.4)')
+  // Warm glow
+  const glow = ctx.createRadialGradient(w * 0.18, h * 0.22, 20, w * 0.18, h * 0.22, 480)
+  glow.addColorStop(0, 'rgba(255,255,255,0.36)')
   glow.addColorStop(1, 'rgba(255,255,255,0)')
   ctx.fillStyle = glow
   ctx.fillRect(0, 0, w, h)
 
   ctx.textBaseline = 'top'
 
-  const quoteFontSize = 52
-  const quoteLineH = quoteFontSize + 24
-  const sourceFontSize = 26
-  const bioFontSize = 25
-  const bioLineH = bioFontSize + 18
+  // Type scale
+  const labelSize = 24       // section headers
+  const labelColor = '#96836e'
+  const labelGap = 18        // space below label before content
+  const sectionGap = 64      // space between sections
+  const headerSize = 32      // 文体·人物 value
+  const quoteSize = 44       // 章句 text
+  const quoteLineH = quoteSize + 22
+  const bioNameSize = 26     // 人物/文体 name in 小知识
+  const bioTextSize = 23     // bio body text
+  const bioLineH = bioTextSize + 14
 
-  ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
-  const quoteLines = wrapText(ctx, text, w - margin * 2, 6)
+  const maxW = w - margin * 2
 
-  ctx.font = `400 ${bioFontSize}px "Noto Serif SC", serif`
-  const styleBioLines = wrapText(ctx, styleBio, w - margin * 2, 2)
-  const authorBioLines = wrapText(ctx, authorBio, w - margin * 2, 2)
+  // Pre-wrap text blocks
+  ctx.font = `700 ${quoteSize}px "Noto Serif SC", serif`
+  const quoteLines = wrapText(ctx, text, maxW, 10)
 
-  // Vertically centre block in top 65% of card
-  const blockH =
-    quoteLines.length * quoteLineH +
-    32 + sourceFontSize +
-    80 +
-    styleBioLines.length * bioLineH +
-    16 +
-    authorBioLines.length * bioLineH
+  ctx.font = `400 ${bioTextSize}px "Noto Serif SC", serif`
+  const styleBioLines = wrapText(ctx, styleBio, maxW, 3)
+  const authorBioLines = wrapText(ctx, authorBio, maxW, 3)
 
-  let y = Math.max(140, (h * 0.65 - blockH) / 2)
+  let y = 108
 
-  // 章句
+  // ── 文体 · 人物 ──────────────────────────────────────────
+  ctx.fillStyle = labelColor
+  ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
+  ctx.fillText('文体 · 人物', margin, y)
+  y += labelSize + labelGap
+
+  ctx.fillStyle = '#2a2520'
+  ctx.font = `400 ${headerSize}px "Noto Serif SC", serif`
+  ctx.fillText(`${styleUsed} · ${authorUsed}`, margin, y)
+  y += headerSize + sectionGap
+
+  // ── 章句 ─────────────────────────────────────────────────
+  ctx.fillStyle = labelColor
+  ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
+  ctx.fillText('章句', margin, y)
+  y += labelSize + labelGap
+
   ctx.fillStyle = '#1c1714'
-  ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
+  ctx.font = `700 ${quoteSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
     ctx.fillText(line, margin, y)
     y += quoteLineH
   }
+  y += sectionGap
 
-  y += 32
+  // ── 小知识 ───────────────────────────────────────────────
+  ctx.fillStyle = labelColor
+  ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
+  ctx.fillText('小知识', margin, y)
+  y += labelSize + labelGap
 
-  // Attribution
-  ctx.fillStyle = '#96836e'
-  ctx.font = `400 ${sourceFontSize}px "Noto Serif SC", serif`
-  ctx.fillText(`—— 仿${styleUsed}·${authorUsed}体`, margin, y)
-  y += sourceFontSize + 56
+  // Style name + bio
+  ctx.fillStyle = '#3a3028'
+  ctx.font = `700 ${bioNameSize}px "Noto Serif SC", serif`
+  ctx.fillText(styleUsed, margin, y)
+  y += bioNameSize + 10
 
-  // Divider
-  ctx.strokeStyle = 'rgba(148, 122, 88, 0.28)'
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.moveTo(margin, y)
-  ctx.lineTo(margin + 160, y)
-  ctx.stroke()
-  y += 48
-
-  // Style bio
-  ctx.fillStyle = '#7a6e64'
-  ctx.font = `400 ${bioFontSize}px "Noto Serif SC", serif`
+  ctx.fillStyle = '#5c5044'
+  ctx.font = `400 ${bioTextSize}px "Noto Serif SC", serif`
   for (const line of styleBioLines) {
     ctx.fillText(line, margin, y)
     y += bioLineH
   }
+  y += 28
 
-  y += 16
+  // Author name + bio
+  ctx.fillStyle = '#3a3028'
+  ctx.font = `700 ${bioNameSize}px "Noto Serif SC", serif`
+  ctx.fillText(authorUsed, margin, y)
+  y += bioNameSize + 10
 
-  // Author bio
+  ctx.fillStyle = '#5c5044'
+  ctx.font = `400 ${bioTextSize}px "Noto Serif SC", serif`
   for (const line of authorBioLines) {
     ctx.fillText(line, margin, y)
     y += bioLineH
