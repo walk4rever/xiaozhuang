@@ -121,7 +121,7 @@ export default function XieClient() {
           <p className="subtitle">立诚 · 明心 · 见行</p>
           <h1>仿写</h1>
           <p className="description">
-            在老子、庄子、六朝骈文、唐宋八大家、王阳明之间随机取法，写成文哲具佳的古典短章。
+            从楚辞、道家、史传、词、禅语、唐宋古文、骈文、心学八种传统中随机取法，指定人物语感，写成古典短章。
           </p>
         </div>
       </header>
@@ -137,7 +137,7 @@ export default function XieClient() {
         />
 
         <button className="xie-submit" onClick={handleSubmit} disabled={isLoading || !intent.trim()}>
-          {isLoading ? '仿写中…' : '随机生成古典风格章句'}
+          {isLoading ? '仿写中…' : '随机取法，生成古典短章'}
         </button>
       </section>
 
