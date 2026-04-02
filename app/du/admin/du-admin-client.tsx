@@ -152,7 +152,7 @@ export default function DuAdminClient() {
           ? `✗ ${data.error}`
           : `✓ 已发送 ${data.sentCount ?? 0} 封`
       )
-      await fetchStatus()
+      await Promise.all([fetchStatus(), fetchRecent()])
     } catch (e) {
       handleApiError(e)
     } finally {
