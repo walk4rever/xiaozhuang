@@ -298,7 +298,17 @@ export const saveDailyRun = async (runDate: string, passageId: number): Promise<
 }
 
 export const deleteDailyRun = async (runDate: string): Promise<void> => {
+  const runs = await supabaseFetch<{ passage_id: number }[]>(
+    `xz_du_daily_runs?run_date=eq.${runDate}&select=passage_id`
+  )
   await supabaseFetch(`xz_du_daily_runs?run_date=eq.${runDate}`, { method: 'DELETE' })
+  if (runs[0]) {
+    await supabaseFetch(`xz_du_passages?id=eq.${runs[0].passage_id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ last_sent_at: null }),
+    })
+  }
 }
 
 export const updateSentCount = async (runDate: string, sentCount: number): Promise<void> => {
