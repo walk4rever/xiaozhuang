@@ -550,9 +550,11 @@
 /* 上下段导航 */
 .du-day-nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 1.5rem;
   margin-top: 2rem;
   padding-top: 1.25rem;
+  padding-bottom: 2rem;
   border-top: 1px solid var(--line-soft);
 }
 
