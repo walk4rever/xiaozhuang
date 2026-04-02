@@ -14,6 +14,20 @@ interface RunSummary {
   }
 }
 
+interface PassageSummary {
+  id: number
+  source_origin: string | null
+  title: string | null
+}
+
+interface LibraryResult {
+  items: (RunSummary | PassageSummary)[]
+  total: number
+  page: number
+  limit: number
+  type: 'sent' | 'unsent'
+}
+
 interface TodayStatus {
   prepared: boolean
   run: RunSummary | null
@@ -48,7 +62,9 @@ export default function DuAdminClient() {
   const [authError, setAuthError] = useState(false)
 
   const [todayStatus, setTodayStatus] = useState<TodayStatus | null>(null)
-  const [recentRuns, setRecentRuns] = useState<RunSummary[]>([])
+  const [library, setLibrary] = useState<LibraryResult | null>(null)
+  const [libTab, setLibTab] = useState<'sent' | 'unsent'>('sent')
+  const [libPage, setLibPage] = useState(1)
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -89,23 +105,29 @@ export default function DuAdminClient() {
     }
   }
 
-  // ── 拉取最近7天 ──────────────────────────────────────
-  const fetchRecent = async () => {
+  // ── 拉取文章库 ────────────────────────────────────────
+  const fetchLibrary = async (tab: 'sent' | 'unsent', page: number) => {
+    const secret = sessionStorage.getItem('du_admin_secret') ?? ''
     try {
-      const res = await fetch('/api/du/reading/recent')
-      if (res.ok) {
-        const data = await res.json()
-        setRecentRuns(data ?? [])
-      }
+      const res = await fetch(`/api/du/admin/library?type=${tab}&page=${page}`, {
+        headers: { 'x-cron-secret': secret },
+      })
+      if (res.ok) setLibrary(await res.json())
     } catch { /* ignore */ }
   }
 
   useEffect(() => {
     if (!authed) return
     fetchStatus()
-    fetchRecent()
+    fetchLibrary('sent', 1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed])
+
+  useEffect(() => {
+    if (!authed) return
+    fetchLibrary(libTab, libPage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [libTab, libPage])
 
   // ── 操作 ─────────────────────────────────────────────
   const handleApiError = (e: unknown) => {
@@ -152,7 +174,7 @@ export default function DuAdminClient() {
           ? `✗ ${data.error}`
           : `✓ 已发送 ${data.sentCount ?? 0} 封`
       )
-      await Promise.all([fetchStatus(), fetchRecent()])
+      await Promise.all([fetchStatus(), fetchLibrary(libTab, libPage)])
     } catch (e) {
       handleApiError(e)
     } finally {
@@ -280,24 +302,70 @@ export default function DuAdminClient() {
         </section>
       )}
 
-      {/* 最近7天 */}
-      {recentRuns.length > 0 && (
-        <section className="panel du-panel du-admin-section">
-          <h2 className="du-admin-heading">最近发送记录</h2>
-          <ul className="du-admin-history">
-            {recentRuns.map((r) => (
-              <li key={r.id} className="du-admin-history-item">
-                <span className="du-admin-history-date">{r.run_date}</span>
-                <span className="du-admin-history-source">
-                  {[r.passage.source_origin, r.passage.title].filter(Boolean).join(' · ')}
-                </span>
-                <span className="du-admin-history-sent">{r.sent_count} 封</span>
-                <Link href={`/du/${r.run_date}`} className="du-admin-link" target="_blank">阅读</Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* 文章库 */}
+      <section className="panel du-panel du-admin-section">
+        <h2 className="du-admin-heading">
+          文章库
+          {library && <span className="du-admin-library-total">共 {library.total} 条</span>}
+        </h2>
+
+        <div className="du-admin-tabs">
+          <button
+            className={`du-admin-tab ${libTab === 'sent' ? 'du-admin-tab-active' : ''}`}
+            onClick={() => { setLibTab('sent'); setLibPage(1) }}
+          >已发送</button>
+          <button
+            className={`du-admin-tab ${libTab === 'unsent' ? 'du-admin-tab-active' : ''}`}
+            onClick={() => { setLibTab('unsent'); setLibPage(1) }}
+          >待发送</button>
+        </div>
+
+        {library && library.items.length > 0 && (
+          <>
+            <ul className="du-admin-history">
+              {libTab === 'sent'
+                ? (library.items as RunSummary[]).map((r) => (
+                  <li key={r.id} className="du-admin-history-item">
+                    <span className="du-admin-history-date">{r.run_date}</span>
+                    <span className="du-admin-history-source">
+                      {[r.passage.source_origin, r.passage.title].filter(Boolean).join(' · ')}
+                    </span>
+                    <span className="du-admin-history-sent">{r.sent_count} 封</span>
+                    <Link href={`/du/${r.run_date}`} className="du-admin-link" target="_blank">阅读</Link>
+                  </li>
+                ))
+                : (library.items as PassageSummary[]).map((p) => (
+                  <li key={p.id} className="du-admin-history-item">
+                    <span className="du-admin-history-source">
+                      {[p.source_origin, p.title].filter(Boolean).join(' · ')}
+                    </span>
+                  </li>
+                ))
+              }
+            </ul>
+
+            <div className="du-admin-pagination">
+              <button
+                className="du-admin-btn"
+                onClick={() => setLibPage((p) => Math.max(1, p - 1))}
+                disabled={libPage <= 1}
+              >← 上一页</button>
+              <span className="du-admin-page-info">
+                第 {libPage} 页 / 共 {Math.ceil(library.total / library.limit)} 页
+              </span>
+              <button
+                className="du-admin-btn"
+                onClick={() => setLibPage((p) => p + 1)}
+                disabled={libPage >= Math.ceil(library.total / library.limit)}
+              >下一页 →</button>
+            </div>
+          </>
+        )}
+
+        {library && library.items.length === 0 && (
+          <p className="du-admin-empty">暂无记录</p>
+        )}
+      </section>
     </div>
   )
 }

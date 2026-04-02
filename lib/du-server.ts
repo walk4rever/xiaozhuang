@@ -83,6 +83,29 @@ const supabaseFetch = async <T>(path: string, init?: RequestInit): Promise<T> =>
   return JSON.parse(text) as T
 }
 
+const supabaseFetchPaged = async <T>(path: string): Promise<{ data: T[]; total: number }> => {
+  const supabaseUrl = required(env.supabaseUrl, 'SUPABASE_URL')
+  const serviceRoleKey = required(env.supabaseServiceRoleKey, 'SUPABASE_SERVICE_ROLE_KEY')
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'count=exact',
+    },
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(`Supabase request failed: ${response.status} ${text}`)
+  }
+
+  const total = parseInt(response.headers.get('content-range')?.split('/')[1] ?? '0', 10)
+  const data = (await response.json()) as T[]
+  return { data, total }
+}
+
 // ---------------------------------------------------------------------------
 // Subscribers
 // ---------------------------------------------------------------------------
@@ -236,6 +259,27 @@ export const getRecentRuns = async (limit = 7): Promise<DailyRunWithPassage[]> =
     sent_count: row.sent_count,
     passage: row.xz_du_passages,
   }))
+}
+
+export const getSentPassages = async (page: number, limit: number): Promise<{ items: DailyRunWithPassage[]; total: number }> => {
+  const offset = (page - 1) * limit
+  const { data, total } = await supabaseFetchPaged<{
+    id: number; run_date: string; passage_id: number; sent_count: number; xz_du_passages: Passage
+  }>(
+    `xz_du_daily_runs?select=id,run_date,passage_id,sent_count,xz_du_passages(id,source_book,source_origin,title,difficulty,theme)&order=run_date.desc&limit=${limit}&offset=${offset}`
+  )
+  return {
+    items: data.map((row) => ({ id: row.id, run_date: row.run_date, passage_id: row.passage_id, sent_count: row.sent_count, passage: row.xz_du_passages })),
+    total,
+  }
+}
+
+export const getUnsentPassages = async (page: number, limit: number): Promise<{ items: Passage[]; total: number }> => {
+  const offset = (page - 1) * limit
+  const { data, total } = await supabaseFetchPaged<Passage>(
+    `xz_du_passages?select=id,source_origin,title,difficulty,theme&enabled=eq.true&last_sent_at=is.null&payload=not.is.null&order=id.asc&limit=${limit}&offset=${offset}`
+  )
+  return { items: data, total }
 }
 
 export const saveDailyRun = async (runDate: string, passageId: number): Promise<void> => {
