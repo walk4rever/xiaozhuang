@@ -538,3 +538,34 @@
   font-size: 0.9rem;
   padding: 1rem 0;
 }
+
+/* 背景提示 */
+.du-day-context {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  margin: 0 0 1.5rem;
+  letter-spacing: 0.03em;
+}
+
+/* 上下段导航 */
+.du-day-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.du-day-nav-btn {
+  font-size: 0.88rem;
+  color: var(--ink-1);
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-soft);
+  transition: background 0.15s;
+}
+
+.du-day-nav-btn:hover {
+  background: var(--paper-panel);
+}

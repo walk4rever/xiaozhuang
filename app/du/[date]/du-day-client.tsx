@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import type { DailyRunWithPassage } from '@/lib/du-server'
+import type { DailyRunWithPassage, PassageContext } from '@/lib/du-server'
 import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 
 interface Props {
   run: DailyRunWithPassage
   date: string
+  context?: PassageContext | null
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +182,7 @@ const generateDuShareCard = async (run: DailyRunWithPassage, date: string): Prom
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
-export default function DuDayClient({ run, date }: Props) {
+export default function DuDayClient({ run, date, context }: Props) {
   const { passage } = run
   const payload = passage.payload
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
@@ -234,6 +235,11 @@ export default function DuDayClient({ run, date }: Props) {
       </header>
 
       <section className="panel du-panel du-day-panel">
+        {/* 背景提示 */}
+        {context && (
+          <p className="du-day-context">{context.contextLine}</p>
+        )}
+
         {/* 原文 */}
         <div className="du-day-section">
           <span className="du-day-label">原文</span>
@@ -309,6 +315,20 @@ export default function DuDayClient({ run, date }: Props) {
               <path d={SHARE_ICON} />
             </svg>
           </button>
+        )}
+
+        {/* 上下段导航 */}
+        {context && (context.prevId || context.nextId) && (
+          <div className="du-day-nav">
+            {context.prevId
+              ? <Link href={`/du/preview/${context.prevId}`} className="du-day-nav-btn">← 上一段</Link>
+              : <span />
+            }
+            {context.nextId
+              ? <Link href={`/du/preview/${context.nextId}`} className="du-day-nav-btn">下一段 →</Link>
+              : <span />
+            }
+          </div>
         )}
       </section>
 

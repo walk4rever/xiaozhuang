@@ -30,6 +30,15 @@ export type DailyRunWithPassage = DailyRun & {
   passage: Passage
 }
 
+export type PassageContext = {
+  baseTitle: string
+  segmentNumber: number | null
+  totalSegments: number
+  prevId: number | null
+  nextId: number | null
+  contextLine: string
+}
+
 // ---------------------------------------------------------------------------
 // Env
 // ---------------------------------------------------------------------------
@@ -216,6 +225,37 @@ export const getPassageById = async (id: number): Promise<Passage | null> => {
     `xz_du_passages?select=id,source_book,source_origin,title,content,difficulty,theme,payload&id=eq.${id}&limit=1`
   )
   return rows[0] ?? null
+}
+
+function parseSegment(title: string): { base: string; segment: number | null } {
+  const m = title.match(/^(.+?)（(\d+)）$/)
+  if (m) return { base: m[1], segment: parseInt(m[2], 10) }
+  return { base: title, segment: null }
+}
+
+export const getPassageContext = async (
+  passageId: number,
+  sourceOrigin: string,
+  title: string
+): Promise<PassageContext> => {
+  const { base, segment } = parseSegment(title)
+
+  const siblings = await supabaseFetch<{ id: number }[]>(
+    `xz_du_passages?select=id&source_origin=eq.${encodeURIComponent(sourceOrigin)}&title=like.${encodeURIComponent(base + '%')}&enabled=eq.true&order=id.asc`
+  )
+
+  const ids = siblings.map((s) => s.id)
+  const idx = ids.indexOf(passageId)
+  const totalSegments = ids.length
+  const prevId = idx > 0 ? ids[idx - 1] : null
+  const nextId = idx < ids.length - 1 ? ids[idx + 1] : null
+
+  let contextLine = `节选自《${sourceOrigin}》· ${base}`
+  if (segment !== null && totalSegments > 1) {
+    contextLine += `｜第 ${segment} 段，共 ${totalSegments} 段`
+  }
+
+  return { baseTitle: base, segmentNumber: segment, totalSegments, prevId, nextId, contextLine }
 }
 
 // ---------------------------------------------------------------------------
@@ -430,7 +470,7 @@ export const generateDuPayload = async (passage: Passage): Promise<DuOutput> => 
 // ---------------------------------------------------------------------------
 // Email
 // ---------------------------------------------------------------------------
-const buildMailHtml = (runDate: string, passage: Passage, payload: DuOutput): string => {
+const buildMailHtml = (runDate: string, passage: Passage, payload: DuOutput, contextLine?: string): string => {
   const readingUrl = `${env.appBaseUrl}/du/${runDate}`
   const unsubUrl = `${env.appBaseUrl}/api/du/unsubscribe?email={{email}}`
   const keywordHtml = payload.keywords
@@ -441,7 +481,8 @@ const buildMailHtml = (runDate: string, passage: Passage, payload: DuOutput): st
   return `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Noto Serif SC',serif;max-width:680px;margin:0 auto;color:#2b2320;line-height:1.9;">
   <p style="color:#6b5f54;margin-bottom:4px;">${runDate} · ${passage.source_book}</p>
-  <h2 style="margin:0 0 20px;">${source}</h2>
+  <h2 style="margin:0 0 8px;">${source}</h2>
+  ${contextLine ? `<p style="color:#8a7d71;font-size:0.88rem;margin:0 0 20px;">${contextLine}</p>` : ''}
 
   <h3>原文</h3>
   <p style="background:#faf7f2;padding:16px;border-radius:8px;border-left:3px solid #c8b49a;">
@@ -488,12 +529,16 @@ export const sendDuEmails = async (
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
   const subject = `今日慢读｜${source}`
 
+  const ctx = passage.source_origin && passage.title
+    ? await getPassageContext(passage.id, passage.source_origin, passage.title).catch(() => null)
+    : null
+
   // Resend batch API — 单次请求发所有订阅者
   const emails = subscribers.map((s) => ({
     from,
     to: [s.email],
     subject,
-    html: buildMailHtml(runDate, passage, payload).replace(
+    html: buildMailHtml(runDate, passage, payload, ctx?.contextLine).replace(
       /\{\{email\}\}/g,
       encodeURIComponent(s.email)
     ),
@@ -526,6 +571,10 @@ export const sendTestEmail = async (
   const adminEmail = required(env.duAdminEmail, 'DU_ADMIN_EMAIL')
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
 
+  const ctx = passage.source_origin && passage.title
+    ? await getPassageContext(passage.id, passage.source_origin, passage.title).catch(() => null)
+    : null
+
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -536,7 +585,7 @@ export const sendTestEmail = async (
       from,
       to: [adminEmail],
       subject: `[测试] 今日慢读｜${source}`,
-      html: buildMailHtml(runDate, passage, payload).replace(
+      html: buildMailHtml(runDate, passage, payload, ctx?.contextLine).replace(
         /\{\{email\}\}/g,
         encodeURIComponent(adminEmail)
       ),

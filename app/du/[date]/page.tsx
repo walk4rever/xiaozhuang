@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getRunByDate } from '@/lib/du-server'
+import { getRunByDate, getPassageContext } from '@/lib/du-server'
 import DuDayClient from './du-day-client'
 
 interface Props {
@@ -40,5 +40,9 @@ export default async function DuDayPage({ params }: Props) {
   const run = await getRunByDate(date).catch(() => null)
   if (!run) notFound()
 
-  return <DuDayClient run={run} date={date} />
+  const context = run.passage.source_origin && run.passage.title
+    ? await getPassageContext(run.passage.id, run.passage.source_origin, run.passage.title).catch(() => null)
+    : null
+
+  return <DuDayClient run={run} date={date} context={context} />
 }

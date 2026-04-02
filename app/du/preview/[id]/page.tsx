@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getPassageById } from '@/lib/du-server'
+import { getPassageById, getPassageContext } from '@/lib/du-server'
 import DuDayClient from '../../[date]/du-day-client'
 
 interface Props {
@@ -14,6 +14,10 @@ export default async function DuPreviewPage({ params }: Props) {
   const passage = await getPassageById(passageId).catch(() => null)
   if (!passage || !passage.payload) notFound()
 
+  const context = passage.source_origin && passage.title
+    ? await getPassageContext(passageId, passage.source_origin, passage.title).catch(() => null)
+    : null
+
   const run = {
     id: 0,
     run_date: '',
@@ -22,5 +26,5 @@ export default async function DuPreviewPage({ params }: Props) {
     passage,
   }
 
-  return <DuDayClient run={run} date="预览" />
+  return <DuDayClient run={run} date={context?.contextLine ?? '预览'} context={context} />
 }
