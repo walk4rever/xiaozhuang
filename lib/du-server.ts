@@ -598,6 +598,29 @@ export const sendTestEmail = async (
   }
 }
 
+export const sendCronAlertEmail = async (job: string, error: string): Promise<void> => {
+  const resendApiKey = env.resendApiKey
+  const from = env.duFromEmail
+  const adminEmail = env.duAdminEmail
+  if (!resendApiKey || !from || !adminEmail) return
+
+  const time = new Date().toISOString()
+  const html = `
+<div style="font-family:monospace;max-width:560px;margin:0 auto;color:#2a2520;line-height:1.6;">
+  <p><strong>❌ Cron 任务失败</strong></p>
+  <p>任务：<code>${job}</code></p>
+  <p>时间：<code>${time}</code></p>
+  <p>错误：</p>
+  <pre style="background:#f5f0e8;padding:1rem;border-radius:4px;white-space:pre-wrap;">${error}</pre>
+</div>`.trim()
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to: [adminEmail], subject: `[小庄·告警] ${job} 失败`, html }),
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 import {
   getActiveSubscribers,
   getRunByDate,
+  sendCronAlertEmail,
   sendDuEmails,
   sendTestEmail,
   updatePassageLastSentAt,
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Send failed'
+    await sendCronAlertEmail('cron/send', message)
     return Response.json({ error: message }, { status: 500 })
   }
 }

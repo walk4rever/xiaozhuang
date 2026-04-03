@@ -3,6 +3,7 @@ import {
   getRunByDate,
   pickTodayPassage,
   saveDailyRun,
+  sendCronAlertEmail,
   verifyCronSecret,
 } from '@/lib/du-server'
 
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Prepare failed'
+    await sendCronAlertEmail('cron/prepare', message)
     return Response.json({ error: message }, { status: 500 })
   }
 }
