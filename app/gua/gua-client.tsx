@@ -1053,9 +1053,11 @@ export default function GuaClient() {
               </svg>
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <button className="cast-button" onClick={resetCast}>放空一下</button>
-            </div>
+            {result?.interpretation && result.interpretation !== '解读生成中...' ? (
+              <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+                <button className="cast-button" style={{ width: 'auto', minWidth: '160px', marginTop: 0 }} onClick={resetCast}>放空一下</button>
+              </div>
+            ) : null}
 
             {isShareOpen && shareImageUrl ? (
               <div
