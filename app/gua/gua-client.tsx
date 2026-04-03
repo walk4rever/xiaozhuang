@@ -151,6 +151,15 @@ const deriveHexagram = (lines: Line[]) => {
   return { number, entry }
 }
 
+const CACHE_API = '/api/gua/interpret'
+
+const buildCacheKey = (baseId: number, lines: Line[]): { key: string; baseId: number; changing: number[] } => {
+  const changing = lines
+    .map((line, i) => (line.changing ? i + 1 : null))
+    .filter((n): n is number => n !== null)
+  return { key: `${baseId}_${changing.length ? changing.join(',') : '0'}`, baseId, changing }
+}
+
 const INTERPRETATION_TEMPERATURE = 0.75
 
 const getHexagramName = (entry: HexagramEntry | null) => {
@@ -344,6 +353,24 @@ const requestInterpretation = async (
   changedEntry: HexagramEntry | null,
   onChunk?: (text: string) => void
 ) => {
+  // Cache check (only when entry is resolved)
+  if (entry) {
+    const { baseId, changing } = buildCacheKey(entry.id, lines)
+    const params = new URLSearchParams({ baseId: String(baseId), changing: changing.join(',') })
+    try {
+      const res = await fetch(`${CACHE_API}?${params}`)
+      if (res.ok) {
+        const json = await res.json() as { hit: boolean; data?: { base_interpretation: string; changing_lines_guidance: string; changed_interpretation: string } }
+        if (json.hit && json.data) {
+          const { base_interpretation, changing_lines_guidance, changed_interpretation } = json.data
+          return JSON.stringify({ baseInterpretation: base_interpretation, changingLinesGuidance: changing_lines_guidance, changedInterpretation: changed_interpretation })
+        }
+      }
+    } catch {
+      // Cache unavailable — fall through to LLM
+    }
+  }
+
   const prompt = buildInterpretationPrompt(lines, entry, changedEntry)
 
   const response = await fetch('/api/llm', {
@@ -383,6 +410,30 @@ const requestInterpretation = async (
   }
 
   if (!content) throw new Error('interpretation_empty')
+
+  // Save to cache after successful stream (fire-and-forget)
+  if (entry) {
+    try {
+      const parsed = JSON.parse(content) as { baseInterpretation?: string; changingLinesGuidance?: string; changedInterpretation?: string }
+      if (parsed.baseInterpretation && parsed.changingLinesGuidance && parsed.changedInterpretation) {
+        const { baseId, changing } = buildCacheKey(entry.id, lines)
+        fetch(CACHE_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            baseId,
+            changing,
+            baseInterpretation: parsed.baseInterpretation,
+            changingLinesGuidance: parsed.changingLinesGuidance,
+            changedInterpretation: parsed.changedInterpretation,
+          }),
+        }).catch(() => { /* ignore cache write failures */ })
+      }
+    } catch {
+      // Not valid JSON — skip caching
+    }
+  }
+
   return content
 }
 
