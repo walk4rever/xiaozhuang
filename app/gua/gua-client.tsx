@@ -1065,19 +1065,14 @@ export default function GuaClient() {
                 role="dialog"
                 aria-modal="true"
                 aria-label="卦象分享图片预览"
-                onClick={handleCloseShare}
               >
-                <div className="gua-share-sheet-card" onClick={(event) => event.stopPropagation()}>
-                  <div className="gua-share-sheet-header">
-                    <p className="gua-share-sheet-title">卦象长图（可保存后分享）</p>
-                    <button type="button" className="gua-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
-                      ×
-                    </button>
-                  </div>
-                  <div className="gua-share-sheet-preview">
-                    <img src={shareImageUrl} alt="卦象分享长图预览" className="gua-share-sheet-image" />
-                  </div>
+                <div className="gua-share-sheet-topbar">
+                  <span className="gua-share-sheet-title">长按图片保存</span>
+                  <button type="button" className="gua-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
+                    ×
+                  </button>
                 </div>
+                <img src={shareImageUrl} alt="卦象分享长图预览" className="gua-share-sheet-image" />
               </div>
             ) : null}
           </section>
@@ -1086,5 +1081,4 @@ export default function GuaClient() {
     </div>
   )
 }
-
 
