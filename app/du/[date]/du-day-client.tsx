@@ -413,7 +413,7 @@ export default function DuDayClient({ run, date, context }: Props) {
         )}
 
         {/* 分享按钮 */}
-        {payload && (
+        {payload && !isShareOpen && (
           <button
             className="du-share-icon-button du-share-icon-button-floating"
             onClick={openShare}
@@ -444,25 +444,22 @@ export default function DuDayClient({ run, date, context }: Props) {
       {/* 分享弹窗 */}
       {isShareOpen && (
         <div className="du-share-sheet" onClick={closeShare}>
-          <div className="du-share-sheet-card" onClick={(e) => e.stopPropagation()}>
+          <div className="du-share-sheet-inner" onClick={(e) => e.stopPropagation()}>
             <div className="du-share-sheet-header">
-              <h3 className="du-share-sheet-title">慢读长图，长按图片保存</h3>
+              <h3 className="du-share-sheet-title">长按图片保存</h3>
               <button className="du-share-close" onClick={closeShare} aria-label="关闭">×</button>
             </div>
 
-            <div className="du-share-sheet-preview">
-              {isGenerating && (
-                <div className="du-share-generating">生成中…</div>
-              )}
-              {shareImageUrl && (
-                <img
-                  className="du-share-sheet-image"
-                  src={shareImageUrl}
-                  alt="慢读分享长图预览"
-                />
-              )}
-            </div>
-
+            {isGenerating && (
+              <div className="du-share-generating">生成中…</div>
+            )}
+            {shareImageUrl && (
+              <img
+                className="du-share-sheet-image"
+                src={shareImageUrl}
+                alt="慢读分享长图预览"
+              />
+            )}
           </div>
         </div>
       )}
