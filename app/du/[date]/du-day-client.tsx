@@ -145,8 +145,8 @@ const generateDuShareCard = async (
     section6H
 
   const paddingTop = 120
-  const paddingBottom = 140
-  const footerTop = paddingTop + contentH + 96
+  const paddingBottom = 80
+  const footerTop = paddingTop + contentH + 64
   const h = footerTop + SHARE_QR_SIZE + paddingBottom
 
   // Draw pass
