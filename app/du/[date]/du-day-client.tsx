@@ -183,7 +183,6 @@ const generateDuShareCard = async (
     return sy
   }
 
-  const footerGap = 64
   const footerTopY = simulateY() + footerGap
   const h = footerTopY + SHARE_QR_SIZE + paddingBottom
 
