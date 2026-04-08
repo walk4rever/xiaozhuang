@@ -16,6 +16,9 @@ dist
 PRODUCT.md
 TODO.md
 
+# supabase cli
+supabase/.temp/
+
 # misc
 .DS_Store
 *.pem
