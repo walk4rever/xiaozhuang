@@ -949,6 +949,43 @@ export default function GuaClient() {
     setIsShareOpen(false)
   }
 
+  const handleSaveShareImage = async () => {
+    const blob = shareBlob ?? (await buildShareCard())
+    if (!blob) return
+
+    const filename = `xiaozhuang-gua-${result?.number ?? 'share'}.png`
+    const file = new File([blob], filename, { type: blob.type || 'image/png' })
+
+    try {
+      if (
+        typeof navigator !== 'undefined' &&
+        'share' in navigator &&
+        typeof navigator.share === 'function' &&
+        (!('canShare' in navigator) || navigator.canShare?.({ files: [file] }))
+      ) {
+        await navigator.share({
+          title: '问心卦象分享图',
+          text: '小庄 · 问心',
+          files: [file],
+        })
+        return
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
+    }
+
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.rel = 'noopener'
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
   return (
     <div className="app gua-app">
       <header className="hero gua-hero">
@@ -1067,12 +1104,17 @@ export default function GuaClient() {
                 aria-label="卦象分享图片预览"
               >
                 <div className="gua-share-sheet-topbar">
-                  <span className="gua-share-sheet-title">长按图片保存</span>
+                  <span className="gua-share-sheet-title">点图片保存或分享</span>
                   <button type="button" className="gua-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
                     ×
                   </button>
                 </div>
-                <img src={shareImageUrl} alt="卦象分享长图预览" className="gua-share-sheet-image" />
+                <img
+                  src={shareImageUrl}
+                  alt="卦象分享长图预览"
+                  className="gua-share-sheet-image"
+                  onClick={handleSaveShareImage}
+                />
               </div>
             ) : null}
           </section>
@@ -1081,4 +1123,3 @@ export default function GuaClient() {
     </div>
   )
 }
-

@@ -371,6 +371,7 @@
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
+  cursor: pointer;
 }
 
 @media (max-width: 960px) {
