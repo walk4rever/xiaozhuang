@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
+import {
+  canvasToBlob,
+  drawShareFooter,
+  shareBlobFile,
+  SHARE_MARGIN,
+  SHARE_QR_SIZE,
+  SHARE_WIDTH,
+} from '@/lib/share-card'
 
 type ParsedResult = {
   quote: string
@@ -99,14 +106,6 @@ const loadImage = (dataUrl: string) =>
     img.src = dataUrl
   })
 
-const canvasToBlob = (canvas: HTMLCanvasElement, quality: number) =>
-  new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob)
-      else reject(new Error('图片处理失败，请重试。'))
-    }, 'image/jpeg', quality)
-  })
-
 const optimizeImage = async (file: File): Promise<ImageAsset> => {
   if (!file.type.startsWith('image/')) {
     throw new Error('只能上传图片文件。')
@@ -195,10 +194,13 @@ const wrapText = (
   return lines
 }
 
-const generateShareCard = async (
+const renderShareCard = async (
+  ctx: CanvasRenderingContext2D,
   result: ParsedResult,
   image: ImageAsset | null,
-  template: ShareTemplate
+  template: ShareTemplate,
+  canvasHeight: number,
+  shouldDraw: boolean
 ) => {
   const w = SHARE_WIDTH
   const margin = SHARE_MARGIN
@@ -211,18 +213,12 @@ const generateShareCard = async (
   const interpretFontSize = usePhotoTemplate ? 25 : 27
   const interpretLineH = interpretFontSize + 18
 
-  // ── Measurement pass ──────────────────────────────────────
-  const tmp = document.createElement('canvas')
-  tmp.width = w
-  tmp.height = 100
-  const mCtx = tmp.getContext('2d')!
+  ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
+  const quoteLines = wrapText(ctx, result.quote, w - margin * 2, usePhotoTemplate ? 4 : 5)
 
-  mCtx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
-  const quoteLines = wrapText(mCtx, result.quote, w - margin * 2, usePhotoTemplate ? 4 : 5)
-
-  mCtx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
+  ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
   const interpretLines = wrapText(
-    mCtx,
+    ctx,
     result.interpretation.trim().replace(/\n+/g, ' '),
     w - margin * 2,
     usePhotoTemplate ? 5 : 8
@@ -252,51 +248,47 @@ const generateShareCard = async (
     contentStartY = Math.max(140, (availableH * 0.62 - blockH) / 2)
   }
 
-  // ── Draw pass ─────────────────────────────────────────────
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('分享图生成失败，请重试。')
-
-  // Background
-  const bg = ctx.createLinearGradient(0, 0, 0, h)
-  bg.addColorStop(0, '#f9f4ec')
-  bg.addColorStop(0.6, '#f2ebe0')
-  bg.addColorStop(1, '#ece3d4')
-  ctx.fillStyle = bg
-  ctx.fillRect(0, 0, w, h)
+  if (shouldDraw) {
+    const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
+    bg.addColorStop(0, '#f9f4ec')
+    bg.addColorStop(0.6, '#f2ebe0')
+    bg.addColorStop(1, '#ece3d4')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, canvasHeight)
+  }
 
   ctx.textBaseline = 'top'
   let y = contentStartY
 
   if (usePhotoTemplate && image) {
-    const photo = await loadImage(image.dataUrl)
-    const naturalH = Math.round(photo.height * (w / photo.width))
-    const photoH = Math.min(naturalH, 800)
-    const scale = Math.min(w / photo.width, photoH / photo.height)
-    const drawW = Math.round(photo.width * scale)
-    const drawH = Math.round(photo.height * scale)
-    ctx.drawImage(photo, Math.round((w - drawW) / 2), Math.round((photoH - drawH) / 2), drawW, drawH)
+    if (shouldDraw) {
+      const photo = await loadImage(image.dataUrl)
+      const naturalH = Math.round(photo.height * (w / photo.width))
+      const photoH = Math.min(naturalH, 800)
+      const scale = Math.min(w / photo.width, photoH / photo.height)
+      const drawW = Math.round(photo.width * scale)
+      const drawH = Math.round(photo.height * scale)
+      ctx.drawImage(photo, Math.round((w - drawW) / 2), Math.round((photoH - drawH) / 2), drawW, drawH)
 
-    const fade = ctx.createLinearGradient(0, photoH - 120, 0, photoH)
-    fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
-    fade.addColorStop(1, 'rgba(242, 235, 224, 0.6)')
-    ctx.fillStyle = fade
-    ctx.fillRect(0, 0, w, photoH)
-  } else {
-    const glow = ctx.createRadialGradient(w * 0.2, h * 0.28, 20, w * 0.2, h * 0.28, 520)
+      const fade = ctx.createLinearGradient(0, photoH - 120, 0, photoH)
+      fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
+      fade.addColorStop(1, 'rgba(242, 235, 224, 0.6)')
+      ctx.fillStyle = fade
+      ctx.fillRect(0, 0, w, photoH)
+    }
+  } else if (shouldDraw) {
+    const glow = ctx.createRadialGradient(w * 0.2, canvasHeight * 0.28, 20, w * 0.2, canvasHeight * 0.28, 520)
     glow.addColorStop(0, 'rgba(255,255,255,0.4)')
     glow.addColorStop(1, 'rgba(255,255,255,0)')
     ctx.fillStyle = glow
-    ctx.fillRect(0, 0, w, h)
+    ctx.fillRect(0, 0, w, canvasHeight)
   }
 
   // Quote
   ctx.fillStyle = '#1c1714'
   ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
-    ctx.fillText(line, margin, y)
+    if (shouldDraw) ctx.fillText(line, margin, y)
     y += quoteLineH
   }
   y += 32
@@ -304,30 +296,57 @@ const generateShareCard = async (
   // Source
   ctx.fillStyle = '#96836e'
   ctx.font = `400 ${sourceFontSize}px "Noto Serif SC", serif`
-  ctx.fillText(`—— ${result.source}`, margin, y)
+  if (shouldDraw) ctx.fillText(`—— ${result.source}`, margin, y)
   y += sourceFontSize + 56
 
   // Divider
-  ctx.strokeStyle = 'rgba(148, 122, 88, 0.28)'
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.moveTo(margin, y)
-  ctx.lineTo(margin + 160, y)
-  ctx.stroke()
+  if (shouldDraw) {
+    ctx.strokeStyle = 'rgba(148, 122, 88, 0.28)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.moveTo(margin, y)
+    ctx.lineTo(margin + 160, y)
+    ctx.stroke()
+  }
   y += 48
 
   // Interpretation
   ctx.fillStyle = '#5c5044'
   ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
   for (const line of interpretLines) {
-    ctx.fillText(line, margin, y)
+    if (shouldDraw) ctx.fillText(line, margin, y)
     y += interpretLineH
   }
 
   // Footer: fixed gap below content
-  await drawShareFooter(ctx, w, y + 64, '寻章')
+  if (shouldDraw) {
+    await drawShareFooter(ctx, w, y + 64, '寻章')
+    ctx.textBaseline = 'alphabetic'
+  }
 
-  ctx.textBaseline = 'alphabetic'
+  return Math.min(2200, Math.ceil(y + 64 + SHARE_QR_SIZE + margin))
+}
+
+const generateShareCard = async (
+  result: ParsedResult,
+  image: ImageAsset | null,
+  template: ShareTemplate
+) => {
+  const measureCanvas = document.createElement('canvas')
+  measureCanvas.width = SHARE_WIDTH
+  measureCanvas.height = 1
+  const measureCtx = measureCanvas.getContext('2d')
+  if (!measureCtx) throw new Error('分享图生成失败，请重试。')
+
+  const finalHeight = await renderShareCard(measureCtx, result, image, template, 1, false)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = SHARE_WIDTH
+  canvas.height = finalHeight
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('分享图生成失败，请重试。')
+
+  await renderShareCard(ctx, result, image, template, finalHeight, true)
   return await canvasToBlob(canvas, 0.92)
 }
 
@@ -512,6 +531,12 @@ export default function XunClient() {
     setIsShareOpen(false)
   }
 
+  const handleSaveShareImage = async () => {
+    const blob = shareBlob ?? (await buildShareCard())
+    if (!blob) return
+    await shareBlobFile(blob, 'xiaozhuang-xun-share.jpg', '寻章分享图', '小庄 · 寻章')
+  }
+
   return (
     <div className="app xun-app">
       <header className="hero xun-hero">
@@ -648,17 +673,21 @@ export default function XunClient() {
               aria-label="分享图片预览"
               onClick={handleCloseShare}
             >
-              <div className="xun-share-sheet-card" onClick={(event) => event.stopPropagation()}>
-                <div className="xun-share-sheet-header">
-                  <p className="xun-share-sheet-title">可分享图片</p>
-                  <button type="button" className="xun-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
-                    ×
-                  </button>
-                </div>
-                <div className="xun-share-sheet-preview">
-                  <img src={shareImageUrl} alt="高质量分享图片预览" className="xun-share-sheet-image" />
-                </div>
+              <div className="xun-share-sheet-topbar">
+                <span className="xun-share-sheet-title">点图片保存或分享</span>
+                <button type="button" className="xun-share-close" onClick={handleCloseShare} aria-label="关闭分享预览">
+                  ×
+                </button>
               </div>
+              <img
+                src={shareImageUrl}
+                alt="高质量分享图片预览"
+                className="xun-share-sheet-image"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void handleSaveShareImage()
+                }}
+              />
             </div>
           ) : null}
         </section>

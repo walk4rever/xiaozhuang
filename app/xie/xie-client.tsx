@@ -8,7 +8,14 @@ import {
   pickRandomStyleAndAuthor,
   XIE_YANGMING_SYSTEM_PROMPT,
 } from '@/data/xie-yangming'
-import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
+import {
+  canvasToBlob,
+  drawShareFooter,
+  shareBlobFile,
+  SHARE_MARGIN,
+  SHARE_QR_SIZE,
+  SHARE_WIDTH,
+} from '@/lib/share-card'
 
 type XieOutput = {
   styleUsed: string
@@ -40,19 +47,6 @@ const parseXieOutput = (raw: string): XieOutput | null => {
     return null
   }
 }
-
-
-const canvasToBlob = (canvas: HTMLCanvasElement, quality: number) =>
-  new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob)
-        else reject(new Error('图片生成失败，请重试。'))
-      },
-      'image/jpeg',
-      quality
-    )
-  })
 
 const wrapText = (
   ctx: CanvasRenderingContext2D,
@@ -169,12 +163,15 @@ const drawKnowledgeEntry = (
   return y + lineH
 }
 
-const generateXieShareCard = async (
+const renderXieShareCard = async (
+  ctx: CanvasRenderingContext2D,
   text: string,
   styleUsed: string,
   authorUsed: string,
   styleBio: string,
-  authorBio: string
+  authorBio: string,
+  canvasHeight: number,
+  shouldDraw: boolean
 ) => {
   const w = SHARE_WIDTH
   const margin = SHARE_MARGIN
@@ -191,18 +188,11 @@ const generateXieShareCard = async (
   const bioNameSize = 30
   const bioLineH = bioNameSize + 24
 
-  // ── Measurement pass (no draw) ──────────────────────────
-  const tmpCanvas = document.createElement('canvas')
-  tmpCanvas.width = w
-  tmpCanvas.height = 100
-  const mCtx = tmpCanvas.getContext('2d')
-  if (!mCtx) throw new Error('分享图生成失败，请重试。')
+  ctx.font = `400 ${quoteSize}px "Noto Serif SC", serif`
+  const quoteLines = wrapText(ctx, text, maxW, 12)
 
-  mCtx.font = `400 ${quoteSize}px "Noto Serif SC", serif`
-  const quoteLines = wrapText(mCtx, text, maxW, 12)
-
-  const styleLineCount = measureKnowledgeEntry(mCtx, styleUsed, styleBio, maxW, bioNameSize)
-  const authorLineCount = measureKnowledgeEntry(mCtx, authorUsed, authorBio, maxW, bioNameSize)
+  const styleLineCount = measureKnowledgeEntry(ctx, styleUsed, styleBio, maxW, bioNameSize)
+  const authorLineCount = measureKnowledgeEntry(ctx, authorUsed, authorBio, maxW, bioNameSize)
 
   const section1H = labelSize + labelGap + headerSize
   const section2H = labelSize + labelGap + quoteLines.length * quoteLineH
@@ -211,29 +201,22 @@ const generateXieShareCard = async (
 
   // Dynamic canvas height: content + equal top/bottom padding + QR area
   const padding = 130
-  const h = Math.min(1920, contentH + padding * 2 + SHARE_QR_SIZE + 40)
+  const finalHeight = Math.min(1920, contentH + padding * 2 + SHARE_QR_SIZE + 40)
 
-  // ── Draw pass ───────────────────────────────────────────
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('分享图生成失败，请重试。')
+  if (shouldDraw) {
+    const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
+    bg.addColorStop(0, '#f9f4ec')
+    bg.addColorStop(0.6, '#f2ebe0')
+    bg.addColorStop(1, '#ece3d4')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, canvasHeight)
 
-  // Background
-  const bg = ctx.createLinearGradient(0, 0, 0, h)
-  bg.addColorStop(0, '#f9f4ec')
-  bg.addColorStop(0.6, '#f2ebe0')
-  bg.addColorStop(1, '#ece3d4')
-  ctx.fillStyle = bg
-  ctx.fillRect(0, 0, w, h)
-
-  // Warm glow
-  const glow = ctx.createRadialGradient(w * 0.18, h * 0.22, 20, w * 0.18, h * 0.22, 500)
-  glow.addColorStop(0, 'rgba(255,255,255,0.36)')
-  glow.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, w, h)
+    const glow = ctx.createRadialGradient(w * 0.18, canvasHeight * 0.22, 20, w * 0.18, canvasHeight * 0.22, 500)
+    glow.addColorStop(0, 'rgba(255,255,255,0.36)')
+    glow.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = glow
+    ctx.fillRect(0, 0, w, canvasHeight)
+  }
 
   ctx.textBaseline = 'top'
 
@@ -242,24 +225,24 @@ const generateXieShareCard = async (
   // ── 文体 · 人物 ──────────────────────────────────────────
   ctx.fillStyle = labelColor
   ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
-  ctx.fillText('文体 · 人物', margin, y)
+  if (shouldDraw) ctx.fillText('文体 · 人物', margin, y)
   y += labelSize + labelGap
 
   ctx.fillStyle = '#2a2520'
   ctx.font = `400 ${headerSize}px "Noto Serif SC", serif`
-  ctx.fillText(`${styleUsed} · ${authorUsed}`, margin, y)
+  if (shouldDraw) ctx.fillText(`${styleUsed} · ${authorUsed}`, margin, y)
   y += headerSize + sectionGap
 
   // ── 章句 ─────────────────────────────────────────────────
   ctx.fillStyle = labelColor
   ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
-  ctx.fillText('章句', margin, y)
+  if (shouldDraw) ctx.fillText('章句', margin, y)
   y += labelSize + labelGap
 
   ctx.fillStyle = '#1c1714'
   ctx.font = `400 ${quoteSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
-    ctx.fillText(line, margin, y)
+    if (shouldDraw) ctx.fillText(line, margin, y)
     y += quoteLineH
   }
   y += sectionGap
@@ -267,17 +250,66 @@ const generateXieShareCard = async (
   // ── 小知识 ───────────────────────────────────────────────
   ctx.fillStyle = labelColor
   ctx.font = `400 ${labelSize}px "Noto Serif SC", serif`
-  ctx.fillText('小知识', margin, y)
+  if (shouldDraw) ctx.fillText('小知识', margin, y)
   y += labelSize + labelGap
 
-  y = drawKnowledgeEntry(ctx, styleUsed, styleBio, margin, y, maxW, bioNameSize, bioLineH)
+  if (shouldDraw) {
+    y = drawKnowledgeEntry(ctx, styleUsed, styleBio, margin, y, maxW, bioNameSize, bioLineH)
+  } else {
+    y += styleLineCount * bioLineH
+  }
   y += 20
 
-  drawKnowledgeEntry(ctx, authorUsed, authorBio, margin, y, maxW, bioNameSize, bioLineH)
+  if (shouldDraw) {
+    drawKnowledgeEntry(ctx, authorUsed, authorBio, margin, y, maxW, bioNameSize, bioLineH)
+    await drawShareFooter(ctx, w, finalHeight - margin - SHARE_QR_SIZE, '述怀')
+    ctx.textBaseline = 'alphabetic'
+  }
 
-  await drawShareFooter(ctx, w, h - margin - SHARE_QR_SIZE, '述怀')
+  return finalHeight
+}
 
-  ctx.textBaseline = 'alphabetic'
+const generateXieShareCard = async (
+  text: string,
+  styleUsed: string,
+  authorUsed: string,
+  styleBio: string,
+  authorBio: string
+) => {
+  const measureCanvas = document.createElement('canvas')
+  measureCanvas.width = SHARE_WIDTH
+  measureCanvas.height = 1
+  const measureCtx = measureCanvas.getContext('2d')
+  if (!measureCtx) throw new Error('分享图生成失败，请重试。')
+
+  const finalHeight = await renderXieShareCard(
+    measureCtx,
+    text,
+    styleUsed,
+    authorUsed,
+    styleBio,
+    authorBio,
+    1,
+    false
+  )
+
+  const canvas = document.createElement('canvas')
+  canvas.width = SHARE_WIDTH
+  canvas.height = finalHeight
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('分享图生成失败，请重试。')
+
+  await renderXieShareCard(
+    ctx,
+    text,
+    styleUsed,
+    authorUsed,
+    styleBio,
+    authorBio,
+    finalHeight,
+    true
+  )
+
   return canvasToBlob(canvas, 0.92)
 }
 
@@ -424,6 +456,12 @@ export default function XieClient() {
 
   const handleCloseShare = () => setIsShareOpen(false)
 
+  const handleSaveShareImage = async () => {
+    const blob = shareBlob ?? (await buildShareCard())
+    if (!blob) return
+    await shareBlobFile(blob, 'xiaozhuang-xie-share.jpg', '述怀分享图', '小庄 · 述怀')
+  }
+
   return (
     <div className="app xie-app">
       <header className="hero xie-hero">
@@ -508,22 +546,26 @@ export default function XieClient() {
               aria-label="分享图片预览"
               onClick={handleCloseShare}
             >
-              <div className="xie-share-sheet-card" onClick={(e) => e.stopPropagation()}>
-                <div className="xie-share-sheet-header">
-                  <p className="xie-share-sheet-title">可分享图片</p>
-                  <button
-                    type="button"
-                    className="xie-share-close"
-                    onClick={handleCloseShare}
-                    aria-label="关闭分享预览"
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className="xie-share-sheet-preview">
-                  <img src={shareImageUrl} alt="高质量分享图片预览" className="xie-share-sheet-image" />
-                </div>
+              <div className="xie-share-sheet-topbar">
+                <span className="xie-share-sheet-title">点图片保存或分享</span>
+                <button
+                  type="button"
+                  className="xie-share-close"
+                  onClick={handleCloseShare}
+                  aria-label="关闭分享预览"
+                >
+                  ×
+                </button>
               </div>
+              <img
+                src={shareImageUrl}
+                alt="高质量分享图片预览"
+                className="xie-share-sheet-image"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  void handleSaveShareImage()
+                }}
+              />
             </div>
           ) : null}
         </section>

@@ -49,3 +49,53 @@ export const drawShareFooter = async (
     // QR 加载失败不影响整体生成
   }
 }
+
+export const canvasToBlob = (
+  canvas: HTMLCanvasElement,
+  quality = 0.92,
+  type = 'image/jpeg'
+) =>
+  new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob)
+      else reject(new Error('图片生成失败，请重试。'))
+    }, type, quality)
+  })
+
+export const shareBlobFile = async (
+  blob: Blob,
+  filename: string,
+  title: string,
+  text: string
+) => {
+  const type = blob.type || 'image/jpeg'
+  const file = new File([blob], filename, { type })
+
+  try {
+    if (
+      typeof navigator !== 'undefined' &&
+      'share' in navigator &&
+      typeof navigator.share === 'function' &&
+      (!('canShare' in navigator) || navigator.canShare?.({ files: [file] }))
+    ) {
+      await navigator.share({ title, text, files: [file] })
+      return true
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return true
+    }
+  }
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.rel = 'noopener'
+  link.target = '_blank'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  return true
+}

@@ -554,25 +554,25 @@ const drawHexagramOnCanvas = (
   })
 }
 
-
-const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
-  const canvas = document.createElement('canvas')
-  canvas.width = SHARE_WIDTH
-  canvas.height = SHARE_CARD_MAX_HEIGHT
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('分享图生成失败，请稍后再试。')
-
-  const w = canvas.width
-  const h = canvas.height
+const renderGuaShareCard = async (
+  ctx: CanvasRenderingContext2D,
+  result: HexagramResult,
+  interpretation: ParsedInterpretation,
+  canvasHeight: number,
+  shouldDraw: boolean
+) => {
+  const w = ctx.canvas.width
   const padding = SHARE_MARGIN
   const contentW = w - padding * 2
 
-  const bg = ctx.createLinearGradient(0, 0, 0, h)
-  bg.addColorStop(0, '#f8f4ec')
-  bg.addColorStop(0.55, '#efe8dc')
-  bg.addColorStop(1, '#e9dfd1')
-  ctx.fillStyle = bg
-  ctx.fillRect(0, 0, w, h)
+  if (shouldDraw) {
+    const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
+    bg.addColorStop(0, '#f8f4ec')
+    bg.addColorStop(0.55, '#efe8dc')
+    bg.addColorStop(1, '#e9dfd1')
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, canvasHeight)
+  }
 
   ctx.textBaseline = 'top'
   let y = 72
@@ -584,16 +584,16 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   ctx.fillStyle = '#1f1a16'
   ctx.font = '700 54px "Noto Serif SC", serif'
-  ctx.fillText(baseName, padding, y)
+  if (shouldDraw) ctx.fillText(baseName, padding, y)
   y += 76
 
   ctx.fillStyle = '#6b5f54'
   ctx.font = '400 28px "Noto Serif SC", serif'
   ctx.textAlign = 'left'
-  ctx.fillText(`本卦：${baseName}`, padding, y)
+  if (shouldDraw) ctx.fillText(`本卦：${baseName}`, padding, y)
   if (hasChangedHexagram && changedName) {
     ctx.textAlign = 'right'
-    ctx.fillText(`变卦：${changedName}`, w - padding, y)
+    if (shouldDraw) ctx.fillText(`变卦：${changedName}`, w - padding, y)
     ctx.textAlign = 'left'
   }
   y += 58
@@ -601,7 +601,7 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
   const drawSectionTitle = (title: string) => {
     ctx.fillStyle = '#2f2722'
     ctx.font = '700 34px "Noto Serif SC", serif'
-    ctx.fillText(title, padding, y)
+    if (shouldDraw) ctx.fillText(title, padding, y)
     y += 52
   }
 
@@ -611,7 +611,7 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
     const lineHeight = Math.round(size * 1.62)
     const lines = wrapCanvasText(ctx, text.trim(), contentW)
     for (const line of lines) {
-      if (line) ctx.fillText(line, padding, y)
+      if (shouldDraw && line) ctx.fillText(line, padding, y)
       y += line ? lineHeight : Math.round(lineHeight * 0.45)
     }
     y += gapAfter
@@ -619,11 +619,12 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
 
   const drawHexagramPanel = (lines: Line[]) => {
     const panelHeight = 250
-    ctx.fillStyle = 'rgba(139, 74, 60, 0.1)'
-    drawRoundedRect(ctx, padding, y, contentW, panelHeight, 26)
-    ctx.fill()
-
-    drawHexagramOnCanvas(ctx, lines, padding + 44, y + 30, contentW - 88, panelHeight - 60)
+    if (shouldDraw) {
+      ctx.fillStyle = 'rgba(139, 74, 60, 0.1)'
+      drawRoundedRect(ctx, padding, y, contentW, panelHeight, 26)
+      ctx.fill()
+      drawHexagramOnCanvas(ctx, lines, padding + 44, y + 30, contentW - 88, panelHeight - 60)
+    }
     y += panelHeight + 28
   }
 
@@ -637,8 +638,8 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
     drawHexagramPanel(lines)
 
     drawParagraph(entry?.guaCi ?? '暂无卦辞', 29, '#4d433a', 18)
-
     drawParagraph('爻辞', 30, '#352d27', 10)
+
     entry?.yaoCi.forEach((text, index) => {
       const line = lines[index]
       const isChanging = highlightChanging && (line?.changing ?? false)
@@ -665,26 +666,39 @@ const generateGuaShareCard = async (result: HexagramResult, interpretation: Pars
   }
 
   const footerY = y + 24
-  ctx.strokeStyle = 'rgba(139, 74, 60, 0.2)'
-  ctx.lineWidth = 1.5
-  ctx.beginPath()
-  ctx.moveTo(padding, footerY)
-  ctx.lineTo(w - padding, footerY)
-  ctx.stroke()
+  if (shouldDraw) {
+    ctx.strokeStyle = 'rgba(139, 74, 60, 0.2)'
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.moveTo(padding, footerY)
+    ctx.lineTo(w - padding, footerY)
+    ctx.stroke()
+  }
 
   const footerTopY = footerY + 34
-  await drawShareFooter(ctx, w, footerTopY, '问心')
+  if (shouldDraw) {
+    await drawShareFooter(ctx, w, footerTopY, '问心')
+  }
 
-  y = footerTopY + SHARE_QR_SIZE + 34
+  return Math.min(SHARE_CARD_MAX_HEIGHT, Math.ceil(footerTopY + SHARE_QR_SIZE + 34))
+}
 
-  const finalHeight = Math.max(1700, Math.min(SHARE_CARD_MAX_HEIGHT, y))
+const generateGuaShareCard = async (result: HexagramResult, interpretation: ParsedInterpretation) => {
+  const measureCanvas = document.createElement('canvas')
+  measureCanvas.width = SHARE_WIDTH
+  measureCanvas.height = 1
+  const measureCtx = measureCanvas.getContext('2d')
+  if (!measureCtx) throw new Error('分享图生成失败，请稍后再试。')
+
+  const finalHeight = await renderGuaShareCard(measureCtx, result, interpretation, 1, false)
+
   const output = document.createElement('canvas')
   output.width = SHARE_WIDTH
   output.height = finalHeight
   const outputCtx = output.getContext('2d')
   if (!outputCtx) throw new Error('分享图生成失败，请稍后再试。')
-  outputCtx.drawImage(canvas, 0, 0, SHARE_WIDTH, finalHeight, 0, 0, SHARE_WIDTH, finalHeight)
 
+  await renderGuaShareCard(outputCtx, result, interpretation, finalHeight, true)
   return await canvasToBlob(output, 0.92)
 }
 
@@ -953,8 +967,8 @@ export default function GuaClient() {
     const blob = shareBlob ?? (await buildShareCard())
     if (!blob) return
 
-    const filename = `xiaozhuang-gua-${result?.number ?? 'share'}.png`
-    const file = new File([blob], filename, { type: blob.type || 'image/png' })
+    const filename = `xiaozhuang-gua-${result?.number ?? 'share'}.jpg`
+    const file = new File([blob], filename, { type: blob.type || 'image/jpeg' })
 
     try {
       if (
