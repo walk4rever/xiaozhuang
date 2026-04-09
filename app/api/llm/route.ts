@@ -2,7 +2,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import type { ModelMessage, ImagePart, TextPart } from 'ai'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 export const maxDuration = 300
 
 type RawPart =
