@@ -34,7 +34,9 @@ export type DailyRunWithPassage = DailyRun & {
 export type PassageContext = {
   baseTitle: string
   segmentNumber: number | null
+  currentIndex: number
   totalSegments: number
+  segmentIds: number[]
   prevId: number | null
   nextId: number | null
   contextLine: string
@@ -248,6 +250,7 @@ export const getPassageContext = async (
   const ids = siblings.map((s) => s.id)
   const idx = ids.indexOf(passageId)
   const totalSegments = ids.length
+  const currentIndex = idx >= 0 ? idx + 1 : 1
   const prevId = idx > 0 ? ids[idx - 1] : null
   const nextId = idx < ids.length - 1 ? ids[idx + 1] : null
 
@@ -256,7 +259,16 @@ export const getPassageContext = async (
     contextLine += `｜第 ${segment} 段，共 ${totalSegments} 段`
   }
 
-  return { baseTitle: base, segmentNumber: segment, totalSegments, prevId, nextId, contextLine }
+  return {
+    baseTitle: base,
+    segmentNumber: segment,
+    currentIndex,
+    totalSegments,
+    segmentIds: ids,
+    prevId,
+    nextId,
+    contextLine,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -307,6 +319,30 @@ export const getRecentRuns = async (limit = 7): Promise<DailyRunWithPassage[]> =
     sent_count: row.sent_count,
     passage: row.xz_du_passages,
   }))
+}
+
+export const getRecentRunsPaged = async (page: number, limit: number): Promise<{ items: DailyRunWithPassage[]; total: number }> => {
+  const offset = (Math.max(1, page) - 1) * limit
+  const { data, total } = await supabaseFetchPaged<{
+    id: number
+    run_date: string
+    passage_id: number
+    sent_count: number
+    xz_du_passages: Passage
+  }>(
+    `xz_du_daily_runs?select=id,run_date,passage_id,sent_count,xz_du_passages(id,source_book,source_origin,title,content,difficulty,theme,payload)&order=run_date.desc&limit=${limit}&offset=${offset}`
+  )
+
+  return {
+    items: data.map((row) => ({
+      id: row.id,
+      run_date: row.run_date,
+      passage_id: row.passage_id,
+      sent_count: row.sent_count,
+      passage: row.xz_du_passages,
+    })),
+    total,
+  }
 }
 
 export const getSentPassages = async (page: number, limit: number): Promise<{ items: DailyRunWithPassage[]; total: number }> => {

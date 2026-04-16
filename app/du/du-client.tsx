@@ -6,11 +6,16 @@ import type { DailyRunWithPassage } from '@/lib/du-server'
 
 interface Props {
   recentRuns: DailyRunWithPassage[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+  }
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export default function DuClient({ recentRuns }: Props) {
+export default function DuClient({ recentRuns, pagination }: Props) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -56,6 +61,12 @@ export default function DuClient({ recentRuns }: Props) {
     }
   }
 
+  const totalPages = Math.max(1, Math.ceil(pagination.total / pagination.pageSize))
+  const hasPrev = pagination.page > 1
+  const hasNext = pagination.page < totalPages
+  const recentHash = '#du-recent'
+  const buildPageHref = (page: number) => (page === 1 ? `/du${recentHash}` : `/du?page=${page}${recentHash}`)
+
   return (
     <div className="app du-app">
       <header className="hero du-hero">
@@ -100,7 +111,7 @@ export default function DuClient({ recentRuns }: Props) {
       </section>
 
       {recentRuns.length > 0 && (
-        <section className="panel du-panel">
+        <section id="du-recent" className="panel du-panel">
           <h2 className="du-admin-heading">近期慢读</h2>
           <ul className="du-recent-list">
             {recentRuns.map((r) => (
@@ -112,6 +123,28 @@ export default function DuClient({ recentRuns }: Props) {
               </li>
             ))}
           </ul>
+
+          {totalPages > 1 && (
+            <nav className="du-recent-pager" aria-label="近期慢读分页">
+              {hasPrev ? (
+                <Link href={buildPageHref(pagination.page - 1)} className="du-recent-pager-btn" scroll={false}>
+                  上一页
+                </Link>
+              ) : (
+                <span className="du-recent-pager-btn is-disabled">上一页</span>
+              )}
+
+              <span className="du-recent-pager-info">第 {pagination.page} / {totalPages} 页</span>
+
+              {hasNext ? (
+                <Link href={buildPageHref(pagination.page + 1)} className="du-recent-pager-btn" scroll={false}>
+                  下一页
+                </Link>
+              ) : (
+                <span className="du-recent-pager-btn is-disabled">下一页</span>
+              )}
+            </nav>
+          )}
         </section>
       )}
     </div>

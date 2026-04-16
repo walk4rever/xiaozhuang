@@ -135,6 +135,39 @@
   color: var(--shanshui-primary);
 }
 
+.du-recent-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.du-recent-pager-btn {
+  font-size: 0.86rem;
+  color: var(--ink-1);
+  text-decoration: none;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 0.28rem 0.74rem;
+}
+
+.du-recent-pager-btn:hover {
+  background: var(--paper-panel);
+}
+
+.du-recent-pager-btn.is-disabled {
+  color: var(--ink-3);
+  background: transparent;
+}
+
+.du-recent-pager-info {
+  font-size: 0.84rem;
+  color: var(--ink-2);
+}
+
 /* ── 阅读页 ─────────────────────────────────────── */
 
 .du-hero-text .du-day-title {
@@ -533,27 +566,35 @@
   letter-spacing: 0.03em;
 }
 
-/* 上下段导航 */
-.du-day-nav {
+/* 分段导航 */
+.du-day-pager {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.55rem;
   margin-top: 2rem;
   padding-top: 1.25rem;
   padding-bottom: 2rem;
   border-top: 1px solid var(--line-soft);
 }
 
-.du-day-nav-btn {
-  font-size: 0.88rem;
-  color: var(--ink-1);
+.du-day-pager-link {
+  font-size: 0.92rem;
+  color: var(--ink-2);
   text-decoration: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid var(--line-soft);
-  transition: background 0.15s;
+  padding: 0.12rem 0.2rem;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
 }
 
-.du-day-nav-btn:hover {
+.du-day-pager-link:hover {
+  color: var(--ink-0);
   background: var(--paper-panel);
+}
+
+.du-day-pager-link.is-current {
+  color: var(--ink-0);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
 }

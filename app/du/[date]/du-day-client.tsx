@@ -310,6 +310,7 @@ export default function DuDayClient({ run, date, context }: Props) {
   const { passage } = run
   const payload = passage.payload
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
+  const isPreviewPage = run.id === 0
 
   const [isShareOpen, setIsShareOpen] = useState(false)
   const [shareBlob, setShareBlob] = useState<Blob | null>(null)
@@ -457,18 +458,26 @@ export default function DuDayClient({ run, date, context }: Props) {
           </button>
         )}
 
-        {/* 上下段导航 */}
-        {context && (context.prevId || context.nextId) && (
-          <div className="du-day-nav">
-            {context.prevId
-              ? <Link href={`/du/preview/${context.prevId}`} className="du-day-nav-btn">← 上一段</Link>
-              : <span />
-            }
-            {context.nextId
-              ? <Link href={`/du/preview/${context.nextId}`} className="du-day-nav-btn">下一段 →</Link>
-              : <span />
-            }
-          </div>
+        {/* 分段导航 */}
+        {context && context.totalSegments > 1 && (
+          <nav className="du-day-pager" aria-label="分段导航">
+            {context.segmentIds.map((segmentId, index) => {
+              const segmentNumber = index + 1
+              const isCurrent = segmentNumber === context.currentIndex
+              const href = isCurrent && !isPreviewPage ? `/du/${date}` : `/du/preview/${segmentId}`
+
+              return (
+                <Link
+                  key={segmentId}
+                  href={href}
+                  className={`du-day-pager-link${isCurrent ? ' is-current' : ''}`}
+                  aria-current={isCurrent ? 'page' : undefined}
+                >
+                  ({segmentNumber})
+                </Link>
+              )
+            })}
+          </nav>
         )}
       </section>
 
