@@ -15,23 +15,28 @@ interface RunSummary {
   }
 }
 
-interface PassageSummary {
-  id: number
-  source_origin: string | null
-  title: string | null
-}
-
-interface LibraryResult {
-  items: (RunSummary | PassageSummary)[]
-  total: number
-  page: number
-  limit: number
-  type: 'sent' | 'unsent'
-}
-
 interface TodayStatus {
   prepared: boolean
   run: RunSummary | null
+}
+
+interface VolumeInfo {
+  volume: number
+  theme: string
+  source_book: string
+  count: number
+}
+
+interface SegmentEntry {
+  id: number
+  title: string
+  has_payload: boolean
+}
+
+interface ArticleEntryAdmin {
+  source_origin: string
+  base_title: string
+  segments: SegmentEntry[]
 }
 
 // ---------------------------------------------------------------------------
@@ -54,8 +59,108 @@ const callApi = async (path: string, body?: Record<string, unknown>) => {
   return res.json()
 }
 
+const authGet = async (path: string) => {
+  const secret = sessionStorage.getItem('du_admin_secret') ?? ''
+  const res = await fetch(path, { headers: { 'x-cron-secret': secret } })
+  if (res.status === 401) throw new Error('密码错误，请重新登录')
+  return res.json()
+}
+
 // ---------------------------------------------------------------------------
-// Component
+// Volume library section
+// ---------------------------------------------------------------------------
+function LibrarySection() {
+  const [volumes, setVolumes] = useState<VolumeInfo[] | null>(null)
+  const [selectedVol, setSelectedVol] = useState<number | null>(null)
+  const [articles, setArticles] = useState<ArticleEntryAdmin[] | null>(null)
+  const [loadingVol, setLoadingVol] = useState(false)
+
+  useEffect(() => {
+    authGet('/api/du/admin/library?type=volumes')
+      .then(setVolumes)
+      .catch(() => setVolumes([]))
+  }, [])
+
+  const handleSelectVol = async (vol: number) => {
+    if (selectedVol === vol) {
+      setSelectedVol(null)
+      setArticles(null)
+      return
+    }
+    setSelectedVol(vol)
+    setArticles(null)
+    setLoadingVol(true)
+    try {
+      const data = await authGet(`/api/du/admin/library?type=volume&vol=${vol}`)
+      setArticles(data)
+    } catch {
+      setArticles([])
+    } finally {
+      setLoadingVol(false)
+    }
+  }
+
+  if (!volumes) return <p className="du-admin-empty">加载中…</p>
+  if (volumes.length === 0) return <p className="du-admin-empty">暂无卷数据</p>
+
+  return (
+    <div>
+      <div className="du-admin-vol-grid">
+        {volumes.map((v) => (
+          <button
+            key={v.volume}
+            className={`du-admin-vol-btn${selectedVol === v.volume ? ' du-admin-vol-btn-active' : ''}`}
+            onClick={() => handleSelectVol(v.volume)}
+          >
+            <span className="du-admin-vol-num">卷{v.volume}</span>
+            <span className="du-admin-vol-theme">{v.theme}</span>
+            <span className="du-admin-vol-count">{v.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {selectedVol !== null && (
+        <div className="du-admin-article-list">
+          {loadingVol && <p className="du-admin-empty">加载中…</p>}
+          {!loadingVol && articles && articles.length === 0 && (
+            <p className="du-admin-empty">该卷暂无段落</p>
+          )}
+          {!loadingVol && articles && articles.map((a) => (
+            <div key={`${a.source_origin}||${a.base_title}`} className="du-admin-article-item">
+              <div className="du-admin-article-header">
+                <span className="du-admin-article-origin">{a.source_origin}</span>
+                <span className="du-admin-article-title">{a.base_title}</span>
+                {a.segments.length > 1 && (
+                  <span className="du-admin-library-total">{a.segments.length} 段</span>
+                )}
+              </div>
+              <div className="du-admin-segment-list">
+                {a.segments.map((seg) => (
+                  <Link
+                    key={seg.id}
+                    href={`/du/admin/passage/${seg.id}`}
+                    className="du-admin-segment-item"
+                  >
+                    <span className={`du-admin-seg-badge ${seg.has_payload ? 'du-admin-badge-ok' : 'du-admin-badge-warn'}`}>
+                      {seg.has_payload ? '✓' : '○'}
+                    </span>
+                    <span className="du-admin-seg-title">
+                      {a.segments.length > 1 ? seg.title : '编辑'}
+                    </span>
+                    <span className="du-admin-seg-id">#{seg.id}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main component
 // ---------------------------------------------------------------------------
 export default function DuAdminClient() {
   const [authed, setAuthed] = useState(false)
@@ -63,9 +168,6 @@ export default function DuAdminClient() {
   const [authError, setAuthError] = useState(false)
 
   const [todayStatus, setTodayStatus] = useState<TodayStatus | null>(null)
-  const [library, setLibrary] = useState<LibraryResult | null>(null)
-  const [libTab, setLibTab] = useState<'sent' | 'unsent'>('sent')
-  const [libPage, setLibPage] = useState(1)
   const [log, setLog] = useState<string[]>([])
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -106,29 +208,20 @@ export default function DuAdminClient() {
     }
   }
 
-  // ── 拉取文章库 ────────────────────────────────────────
-  const fetchLibrary = async (tab: 'sent' | 'unsent', page: number) => {
-    const secret = sessionStorage.getItem('du_admin_secret') ?? ''
-    try {
-      const res = await fetch(`/api/du/admin/library?type=${tab}&page=${page}`, {
-        headers: { 'x-cron-secret': secret },
-      })
-      if (res.ok) setLibrary(await res.json())
-    } catch { /* ignore */ }
-  }
+  // Auto-restore auth from sessionStorage on mount
+  useEffect(() => {
+    const stored = sessionStorage.getItem('du_admin_secret')
+    if (!stored) return
+    fetch('/api/du/admin/ping', { method: 'POST', headers: { 'x-cron-secret': stored } })
+      .then((r) => { if (r.ok) setAuthed(true) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!authed) return
     fetchStatus()
-    fetchLibrary('sent', 1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed])
-
-  useEffect(() => {
-    if (!authed) return
-    fetchLibrary(libTab, libPage)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [libTab, libPage])
 
   // ── 操作 ─────────────────────────────────────────────
   const handleApiError = (e: unknown) => {
@@ -186,7 +279,7 @@ export default function DuAdminClient() {
           ? `✗ ${data.error}`
           : `✓ 已发送 ${data.sentCount ?? 0} 封`
       )
-      await Promise.all([fetchStatus(), fetchLibrary(libTab, libPage)])
+      await fetchStatus()
     } catch (e) {
       handleApiError(e)
     } finally {
@@ -269,6 +362,15 @@ export default function DuAdminClient() {
             <Link href={`/du/${today}`} className="du-admin-link" target="_blank">
               查看阅读页 →
             </Link>
+            {todayStatus.run && (
+              <Link
+                href={`/du/admin/passage/${todayStatus.run.passage.id}`}
+                className="du-admin-link"
+                style={{ marginLeft: '1rem' }}
+              >
+                编辑今日段落 →
+              </Link>
+            )}
           </div>
         )}
 
@@ -301,6 +403,17 @@ export default function DuAdminClient() {
           >
             {busy === 'send' ? '发送中…' : '发给所有订阅者'}
           </button>
+          {todayStatus?.run && (
+            <button
+              className="du-admin-regen-btn"
+              onClick={() => handleRegenerate(
+                todayStatus.run!.passage.id,
+                todayStatus.run!.passage.title ?? ''
+              )}
+            >
+              重新生成今日 payload
+            </button>
+          )}
         </div>
       </section>
 
@@ -316,76 +429,8 @@ export default function DuAdminClient() {
 
       {/* 文章库 */}
       <section className="panel du-panel du-admin-section">
-        <h2 className="du-admin-heading">
-          文章库
-          {library && <span className="du-admin-library-total">共 {library.total} 条</span>}
-        </h2>
-
-        <div className="du-admin-tabs">
-          <button
-            className={`du-admin-tab ${libTab === 'sent' ? 'du-admin-tab-active' : ''}`}
-            onClick={() => { setLibrary(null); setLibTab('sent'); setLibPage(1) }}
-          >已发送</button>
-          <button
-            className={`du-admin-tab ${libTab === 'unsent' ? 'du-admin-tab-active' : ''}`}
-            onClick={() => { setLibrary(null); setLibTab('unsent'); setLibPage(1) }}
-          >待发送</button>
-        </div>
-
-        {library && library.items.length > 0 && (
-          <>
-            <ul className="du-admin-history">
-              {libTab === 'sent'
-                ? (library.items as RunSummary[]).map((r) => (
-                  <li key={r.id} className="du-admin-history-item">
-                    <span className="du-admin-history-date">{r.run_date}</span>
-                    <span className="du-admin-history-source">
-                      {[r.passage.source_origin, r.passage.title].filter(Boolean).join(' · ')}
-                    </span>
-                    <span className="du-admin-history-sent">{r.sent_count} 封</span>
-                    <Link href={`/du/${r.run_date}`} className="du-admin-link" target="_blank">阅读</Link>
-                    <button
-                      className="du-admin-regen-btn"
-                      onClick={() => handleRegenerate(r.passage.id, r.passage.title ?? '')}
-                    >重新生成</button>
-                  </li>
-                ))
-                : (library.items as PassageSummary[]).map((p) => (
-                  <li key={p.id} className="du-admin-history-item">
-                    <span className="du-admin-history-source">
-                      {[p.source_origin, p.title].filter(Boolean).join(' · ')}
-                    </span>
-                    <Link href={`/du/preview/${p.id}`} className="du-admin-link" target="_blank">阅读</Link>
-                    <button
-                      className="du-admin-regen-btn"
-                      onClick={() => handleRegenerate(p.id, p.title ?? '')}
-                    >重新生成</button>
-                  </li>
-                ))
-              }
-            </ul>
-
-            <div className="du-admin-pagination">
-              <button
-                className="du-admin-btn"
-                onClick={() => setLibPage((p) => Math.max(1, p - 1))}
-                disabled={libPage <= 1}
-              >← 上一页</button>
-              <span className="du-admin-page-info">
-                第 {libPage} 页 / 共 {Math.ceil(library.total / library.limit)} 页
-              </span>
-              <button
-                className="du-admin-btn"
-                onClick={() => setLibPage((p) => p + 1)}
-                disabled={libPage >= Math.ceil(library.total / library.limit)}
-              >下一页 →</button>
-            </div>
-          </>
-        )}
-
-        {library && library.items.length === 0 && (
-          <p className="du-admin-empty">暂无记录</p>
-        )}
+        <h2 className="du-admin-heading">文章库</h2>
+        <LibrarySection />
       </section>
     </div>
   )

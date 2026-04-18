@@ -20,6 +20,22 @@ export type Passage = {
   payload: DuOutput | null
 }
 
+export type PassageFull = Passage & {
+  volume: number | null
+  enabled: boolean
+  payload_generated_at: string | null
+  last_sent_at: string | null
+}
+
+export type PassageUpdate = Partial<{
+  content: string
+  title: string
+  source_origin: string
+  difficulty: number
+  theme: string
+  enabled: boolean
+}>
+
 export type DailyRun = {
   id: number
   run_date: string
@@ -228,6 +244,22 @@ export const getPassageById = async (id: number): Promise<Passage | null> => {
     `xz_du_passages?select=id,source_book,source_origin,title,content,difficulty,theme,payload&id=eq.${id}&limit=1`
   )
   return rows[0] ?? null
+}
+
+export const getPassageByIdFull = async (id: number): Promise<PassageFull | null> => {
+  const rows = await supabaseFetch<PassageFull[]>(
+    `xz_du_passages?select=id,source_book,source_origin,title,content,difficulty,theme,volume,enabled,payload,payload_generated_at,last_sent_at&id=eq.${id}&limit=1`
+  )
+  return rows[0] ?? null
+}
+
+export const updatePassage = async (id: number, fields: PassageUpdate): Promise<void> => {
+  if (Object.keys(fields).length === 0) return
+  await supabaseFetch(`xz_du_passages?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ ...fields, updated_at: new Date().toISOString() }),
+  })
 }
 
 function parseSegment(title: string): { base: string; segment: number | null } {
@@ -675,6 +707,18 @@ export type ArticleEntry = {
   segment_count: number
 }
 
+export type SegmentEntry = {
+  id: number
+  title: string
+  has_payload: boolean
+}
+
+export type ArticleEntryAdmin = {
+  source_origin: string
+  base_title: string
+  segments: SegmentEntry[]
+}
+
 const parseBaseTitle = (title: string): string => title.replace(/（\d+）$/, '')
 
 export const getLibraryVolumes = async (): Promise<VolumeInfo[]> => {
@@ -707,6 +751,34 @@ export const getVolumePassages = async (volume: number): Promise<ArticleEntry[]>
       map.set(key, { source_origin: origin, base_title: base, first_id: row.id, segment_count: 0 })
     }
     map.get(key)!.segment_count++
+  }
+
+  return Array.from(map.values())
+}
+
+export const getVolumePassagesAdmin = async (volume: number): Promise<ArticleEntryAdmin[]> => {
+  const rows = await supabaseFetch<{
+    id: number
+    source_origin: string | null
+    title: string | null
+    payload_generated_at: string | null
+  }[]>(
+    `xz_du_passages?select=id,source_origin,title,payload_generated_at&enabled=eq.true&volume=eq.${volume}&order=id.asc`
+  )
+
+  const map = new Map<string, ArticleEntryAdmin>()
+  for (const row of rows) {
+    const base = parseBaseTitle(row.title ?? '')
+    const origin = row.source_origin ?? ''
+    const key = `${origin}||${base}`
+    if (!map.has(key)) {
+      map.set(key, { source_origin: origin, base_title: base, segments: [] })
+    }
+    map.get(key)!.segments.push({
+      id: row.id,
+      title: row.title ?? base,
+      has_payload: row.payload_generated_at !== null,
+    })
   }
 
   return Array.from(map.values())

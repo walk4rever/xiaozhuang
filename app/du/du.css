@@ -558,6 +558,278 @@
   border-color: var(--ink-1);
 }
 
+/* ── 书库管理（卷浏览器）────────────────────────── */
+
+.du-admin-vol-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.du-admin-vol-btn {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--bg-paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.du-admin-vol-btn:hover {
+  border-color: var(--ink-2);
+}
+
+.du-admin-vol-btn-active {
+  background: var(--ink-0);
+  border-color: var(--ink-0);
+  color: var(--bg-warm);
+}
+
+.du-admin-vol-num {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.du-admin-vol-theme {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+.du-admin-vol-count {
+  font-size: 0.72rem;
+  opacity: 0.5;
+}
+
+.du-admin-article-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.du-admin-article-item {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 0.6rem 0;
+}
+
+.du-admin-article-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.du-admin-article-origin {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+}
+
+.du-admin-article-title {
+  font-size: 0.9rem;
+  color: var(--ink-0);
+}
+
+.du-admin-segment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.du-admin-segment-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--bg-paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--ink-1);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.du-admin-segment-item:hover {
+  border-color: var(--ink-1);
+  color: var(--ink-0);
+}
+
+.du-admin-seg-badge {
+  font-size: 0.72rem;
+}
+
+.du-admin-seg-title {
+  font-size: 0.8rem;
+}
+
+.du-admin-seg-id {
+  font-size: 0.7rem;
+  color: var(--ink-2);
+}
+
+/* ── 段落编辑器导航 ──────────────────────────────── */
+
+.du-admin-seg-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.5rem;
+  background: var(--bg-paper);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.85rem;
+}
+
+.du-admin-seg-nav-btn {
+  color: var(--ink-1);
+  text-decoration: none;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.du-admin-seg-nav-btn:hover {
+  color: var(--ink-0);
+}
+
+.du-admin-seg-nav-disabled {
+  color: var(--ink-3, #ccc);
+  pointer-events: none;
+}
+
+.du-admin-seg-nav-info {
+  color: var(--ink-0);
+  font-weight: 500;
+  text-align: center;
+  flex: 1;
+}
+
+.du-admin-seg-nav-id {
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+/* ── 段落编辑器 ───────────────────────────────────── */
+
+.du-admin-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .du-admin-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.du-admin-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.du-admin-field-label {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  letter-spacing: 0.03em;
+}
+
+.du-admin-input {
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--ink-0);
+  background: var(--bg-paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.du-admin-input:focus {
+  outline: none;
+  border-color: var(--ink-2);
+}
+
+.du-admin-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--ink-1);
+}
+
+.du-admin-textarea {
+  font-family: 'Noto Serif SC', Georgia, serif;
+  font-size: 0.95rem;
+  color: var(--ink-0);
+  background: var(--bg-paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  line-height: 1.9;
+}
+
+.du-admin-textarea:focus {
+  outline: none;
+  border-color: var(--ink-2);
+}
+
+.du-admin-payload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.du-admin-payload-meta {
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  margin: 0 0 0.25rem;
+}
+
+.du-admin-payload-field {
+  background: var(--bg-paper);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+}
+
+.du-admin-payload-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.du-admin-payload-field p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--ink-0);
+}
+
+.du-admin-payload-keywords {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--ink-0);
+}
+
 /* ── 书库 ────────────────────────────────────────── */
 
 .du-library-book-title {
