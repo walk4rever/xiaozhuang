@@ -136,7 +136,7 @@ export default function DuClient({ recentRuns, pagination, volumes }: Props) {
           </div>
           <div className="du-about-criterion">
             <span className="du-about-label">十大文体</span>
-            <span className="du-about-value">论著 · 序跋 · 诏令 · 奏议 · 书牍 · 哀祭 · 赠序 · 传志 · 记体 · 辞赋</span>
+            <span className="du-about-value">论著 · 序跋 · 诏令 · 奏议 · 书牍 · 哀祭 · 传志 · 叙记 · 词赋 · 典志 · 杂记</span>
           </div>
         </div>
         <p className="du-about-why">
