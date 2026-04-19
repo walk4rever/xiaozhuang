@@ -723,7 +723,7 @@ const parseBaseTitle = (title: string): string => title.replace(/（\d+）$/, ''
 
 export const getLibraryVolumes = async (): Promise<VolumeInfo[]> => {
   const rows = await supabaseFetch<{ volume: number; theme: string; source_book: string }[]>(
-    'xz_du_passages?select=volume,theme,source_book&enabled=eq.true&volume=not.is.null&order=volume.asc'
+    'xz_du_passages?select=volume,theme,source_book&enabled=eq.true&volume=not.is.null&order=volume.asc&limit=9999'
   )
 
   const map = new Map<number, VolumeInfo>()
@@ -739,7 +739,7 @@ export const getLibraryVolumes = async (): Promise<VolumeInfo[]> => {
 
 export const getVolumePassages = async (volume: number): Promise<ArticleEntry[]> => {
   const rows = await supabaseFetch<{ id: number; source_origin: string | null; title: string | null }[]>(
-    `xz_du_passages?select=id,source_origin,title&enabled=eq.true&volume=eq.${volume}&order=id.asc`
+    `xz_du_passages?select=id,source_origin,title&enabled=eq.true&volume=eq.${volume}&order=id.asc&limit=9999`
   )
 
   const map = new Map<string, ArticleEntry>()
