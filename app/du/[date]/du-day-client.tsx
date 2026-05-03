@@ -458,7 +458,10 @@ export default function DuDayClient({ run, date, context, author, article }: Pro
         <div className="du-mountain-layer" aria-hidden="true" />
         <div className="seal">读</div>
         <div className="hero-text du-hero-text">
-          <Link href="/du" className="back-link">← 慢读</Link>
+          {passage.volume
+            ? <Link href={`/du/library/${passage.volume}`} className="back-link">← 卷{VOLUME_CHINESE[passage.volume] ?? passage.volume}</Link>
+            : <Link href="/du" className="back-link">← 慢读</Link>
+          }
           <p className="subtitle">{date}</p>
           <h1 className="du-day-title">{source}</h1>
         </div>
