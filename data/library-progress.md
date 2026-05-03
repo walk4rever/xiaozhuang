@@ -22,7 +22,7 @@
 |---|---|---|---|
 | 卷一 | 论著之属一 | ✅ 已入库 | 255 |
 | 卷二 | 论著之属二 | ✅ 已入库 | 241 |
-| 卷三 | 词赋之属上编一 | ⬜ 未入库 | — |
+| 卷三 | 词赋之属上编一 | ✅ 已入库 | 211 |
 | 卷四 | 词赋之属上编二 | ⬜ 未入库 | — |
 | 卷五 | 词赋之属上编三 | ⬜ 未入库 | — |
 | 卷六 | 词赋之属下编一 | ⬜ 未入库 | — |
@@ -47,28 +47,30 @@
 | 卷二十五 | 典志之属二 | ⬜ 未入库 | — |
 | 卷二十六 | 杂记之属 | ✅ 已入库 | 265 |
 
-> **AI 解读状态**：卷一、卷二、卷十、卷十四、卷十五、卷十六、卷二十六共 1524 条，payload 全部生成完毕（卷十五：2026-05-01）。
+> **AI 解读状态**：卷一、卷二、卷三、卷十、卷十四、卷十五、卷十六、卷二十六共 1735 条，payload 全部生成完毕（卷三：2026-05-03）。
 
 ### 入库命令
 
-```bash
-# 入单卷
-SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-jingshi.ts --volume=1
-
-# 入多卷
-SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-jingshi.ts --volume=1,2
-
-# 入全部
-SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-jingshi.ts
-```
-
-入库后需运行 AI 解读生成：
+**推荐：一键入库（入库 + payload + author bio + article background）**
 
 ```bash
-npx tsx scripts/generate-payloads.ts
+npx tsx scripts/seed-volume.ts --volume=3
 ```
 
-按卷维护推荐顺序：
+单独步骤（调试用）：
+
+```bash
+# 只入库
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-jingshi.ts --volume=3
+
+# 只生成 payload
+npx tsx scripts/generate-payloads.ts --volume=3
+
+# 只补 author bio / article background（全局检测缺口，幂等）
+npx tsx scripts/backfill-authors-articles.ts
+```
+
+首次建库维护顺序：
 
 ```bash
 # 1) 新库先跑 migration
@@ -79,11 +81,8 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/backfill-jingshi-
 SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/dedupe-du-passages.ts --dry-run
 SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/dedupe-du-passages.ts
 
-# 4) 加唯一约束后，再按卷入库
-SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-jingshi.ts --volume=2
-
-# 5) 只为该卷生成 payload
-npx tsx scripts/generate-payloads.ts --volume=2
+# 4) 之后按卷用一键命令
+npx tsx scripts/seed-volume.ts --volume=2
 ```
 
 ---
