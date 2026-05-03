@@ -9,9 +9,11 @@
 import { execFileSync } from 'child_process'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { config } from 'dotenv'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
+config({ path: resolve(root, '.env.local') })
 
 const volumeArg = process.argv.find((a) => a.startsWith('--volume='))
 if (!volumeArg) {
