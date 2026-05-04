@@ -1,5 +1,5 @@
 /**
- * 为存量 passages 一次性生成 xz_du_authors 和 xz_du_articles 缺失数据。
+ * 从源文件全量生成 xz_du_authors 和 xz_du_articles 缺失数据（覆盖全部26卷，无需提前入库）。
  *
  * Usage:
  *   npx tsx scripts/backfill-authors-articles.ts           # 全量
@@ -9,6 +9,7 @@
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import { config } from 'dotenv'
+import { parseJingshiPassages } from './jingshi-parser'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -86,28 +87,10 @@ const callAI = async (systemPrompt: string, userContent: string): Promise<string
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-const fetchAllPassages = async (): Promise<Array<{ source_origin: string | null; title: string | null }>> => {
-  const pageSize = 1000
-  const all: Array<{ source_origin: string | null; title: string | null }> = []
-  let from = 0
-  while (true) {
-    const page = await supaFetch<Array<{ source_origin: string | null; title: string | null }>>(
-      `xz_du_passages?select=source_origin,title&enabled=eq.true&order=id.asc`,
-      { headers: { Range: `${from}-${from + pageSize - 1}`, 'Range-Unit': 'items' } }
-    )
-    all.push(...page)
-    if (page.length < pageSize) break
-    from += pageSize
-  }
-  return all
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-const passages = await fetchAllPassages()
+const sourceFile = resolve(__dirname, '../data/经史百家杂钞.txt')
+const passages = parseJingshiPassages(sourceFile)
 
 // Collect unique source_origins and (source_origin, base_title) pairs
 const uniqueAuthors = new Set<string>()
@@ -153,6 +136,8 @@ for (const sourceOrigin of pendingAuthors) {
   try {
     const description = await callAI(AUTHOR_DESCRIPTION_PROMPT, sourceOrigin)
     if (!description) throw new Error('AI returned empty description')
+    if (!/[。！？]$/.test(description.trim())) throw new Error(`description appears truncated: "${description.slice(-20)}"`)
+
     const isExisting = existingAuthorNames.has(sourceOrigin)
     if (isExisting) {
       await supaFetch(`xz_du_authors?source_origin=eq.${encodeURIComponent(sourceOrigin)}`, {
@@ -182,6 +167,8 @@ for (const { sourceOrigin, baseTitle } of pendingArticles) {
   try {
     const background = await callAI(ARTICLE_BACKGROUND_PROMPT, `作者：${sourceOrigin}\n文章：${baseTitle}`)
     if (!background) throw new Error('AI returned empty background')
+    if (!/[。！？]$/.test(background.trim())) throw new Error(`background appears truncated: "${background.slice(-20)}"`)
+
     const isExisting = existingArticleNames.has(`${sourceOrigin}\x00${baseTitle}`)
     if (isExisting) {
       await supaFetch(
