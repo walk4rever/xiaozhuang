@@ -94,13 +94,17 @@ const supaFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
   return res.json()
 }
 
-const fetchPassages = async (limit: number, id?: number, volume?: number): Promise<Passage[]> => {
+const fetchPassages = async (limit: number, id?: number, volumes?: number[]): Promise<Passage[]> => {
   if (id !== undefined) {
     return supaFetch<Passage[]>(
       `xz_du_passages?select=id,source_origin,title,content,volume&id=eq.${id}`
     )
   }
-  const volumeFilter = volume !== undefined ? `&volume=eq.${volume}` : ''
+  const volumeFilter = volumes?.length
+    ? volumes.length === 1
+      ? `&volume=eq.${volumes[0]}`
+      : `&volume=in.(${volumes.join(',')})`
+    : ''
   return supaFetch<Passage[]>(
     `xz_du_passages?select=id,source_origin,title,content,volume&payload=is.null&enabled=eq.true${volumeFilter}&order=id.asc&limit=${limit}`
   )
@@ -216,11 +220,14 @@ const volumeArg = argv.find((a) => a.startsWith('--volume='))
 const concurrencyArg = argv.find((a) => a.startsWith('--concurrency='))
 const limit = limitArg ? parseInt(limitArg.replace('--limit=', ''), 10) : 9999
 const targetId = idArg ? parseInt(idArg.replace('--id=', ''), 10) : undefined
-const targetVolume = volumeArg ? parseInt(volumeArg.replace('--volume=', ''), 10) : undefined
+const targetVolumes = volumeArg
+  ? volumeArg.replace('--volume=', '').split(',').map(Number)
+  : undefined
 const concurrency = concurrencyArg ? parseInt(concurrencyArg.replace('--concurrency=', ''), 10) : DEFAULT_CONCURRENCY
 
-const passages = await fetchPassages(limit, targetId, targetVolume)
-console.log(`Found ${passages.length} passages to process (batch_size=${targetId ? 1 : BATCH_SIZE}, concurrency=${targetId ? 1 : concurrency})`)
+const passages = await fetchPassages(limit, targetId, targetVolumes)
+const volumeLabel = targetVolumes ? `卷 ${targetVolumes.join(', ')}` : '全部'
+console.log(`Found ${passages.length} passages to process [${volumeLabel}] (batch_size=${targetId ? 1 : BATCH_SIZE}, concurrency=${targetId ? 1 : concurrency})`)
 
 let success = 0
 let failed = 0
