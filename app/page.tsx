@@ -99,7 +99,7 @@ export default async function Home() {
       </section>
 
       <section className={styles.duSection}>
-        <h2>《经史百家杂钞》· 曾国藩</h2>
+        <h2>《经史百家杂钞》 · 曾国藩</h2>
         <p className={styles.duIntro}>
           《经史百家杂钞》是曾国藩历时数年亲手编选的古文读本，从经、史、子、集四部广泛选材，汇集百家，取精去芜。
           他在军务繁忙之际仍坚持选编，正因相信：读古文是一种修身的功夫，而非单纯积累知识。
