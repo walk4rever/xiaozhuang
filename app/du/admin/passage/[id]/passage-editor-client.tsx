@@ -145,7 +145,6 @@ export default function PassageEditorClient({ id }: Props) {
       .then(loadPassage)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : '加载失败'))
       .finally(() => setLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const handleSaveMeta = async () => {
