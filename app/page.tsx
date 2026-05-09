@@ -46,6 +46,12 @@ const VOLUME_CHINESE: Record<number, string> = {
   21: '二十一', 22: '二十二', 23: '二十三', 24: '二十四', 25: '二十五', 26: '二十六',
 }
 
+const VOLUME_GROUPS = [
+  { name: '著述门', range: [1, 9] as const, categories: '论著、词赋、序跋' },
+  { name: '告语门', range: [10, 16] as const, categories: '诏令、奏议、书牍、哀祭' },
+  { name: '记载门', range: [17, 26] as const, categories: '传志、叙记、典志、杂记' },
+]
+
 export default async function Home() {
   const [authors, volumes] = await Promise.all([
     getStarMapAuthors().catch(() => []),
@@ -93,7 +99,7 @@ export default async function Home() {
       </section>
 
       <section className={styles.duSection}>
-        <h2>关于这本书</h2>
+        <h2>《经史百家杂钞》· 曾国藩</h2>
         <p className={styles.duIntro}>
           《经史百家杂钞》是曾国藩历时数年亲手编选的古文读本，从经、史、子、集四部广泛选材，汇集百家，取精去芜。
           他在军务繁忙之际仍坚持选编，正因相信：读古文是一种修身的功夫，而非单纯积累知识。
@@ -115,28 +121,35 @@ export default async function Home() {
         <p className={styles.duWhy}>
           如果你想读古文但不知从哪里下手，这本书是一个诚实的答案——这是一个真正用古文做事的人，替你筛过的书单。
         </p>
+        {volumes.length > 0 && (
+          <div className={styles.duCatalog}>
+            <h3 className={styles.duCatalogTitle}>
+              三门 / 十一类
+              <span className={styles.duLibraryTotal}>{volumes.reduce((s, v) => s + v.count, 0)} 条</span>
+            </h3>
+            <ul className={styles.duGroupList}>
+              {VOLUME_GROUPS.map((group) => {
+                const groupVolumes = volumes.filter((v) => v.volume >= group.range[0] && v.volume <= group.range[1])
+                if (groupVolumes.length === 0) return null
+                return (
+                  <li key={group.name} className={styles.duGroupItem}>
+                    <p className={styles.duGroupHeader}>
+                      <strong>{group.name}</strong>（卷{VOLUME_CHINESE[group.range[0]]} - 卷{VOLUME_CHINESE[group.range[1]]}）：{group.categories}
+                    </p>
+                    <div className={styles.duVolumeLinks}>
+                      {groupVolumes.map((v) => (
+                        <Link key={v.volume} href={`/du/library/${v.volume}`} className={styles.duVolumeLink}>
+                          卷{VOLUME_CHINESE[v.volume] ?? v.volume} · {v.theme}
+                        </Link>
+                      ))}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
       </section>
-
-      {volumes.length > 0 && (
-        <section className={styles.duSection}>
-          <h2 className={styles.duLibraryHeading}>
-            书库
-            <span className={styles.duLibraryTotal}>{volumes.reduce((s, v) => s + v.count, 0)} 条</span>
-          </h2>
-          <ul className={styles.duLibraryList}>
-            {volumes.map((v) => (
-              <li key={v.volume} className={styles.duLibraryItem}>
-                <Link href={`/du/library/${v.volume}`} className={styles.duLibraryLink}>
-                  <span className={styles.duLibraryName}>
-                    卷{VOLUME_CHINESE[v.volume] ?? v.volume} · {v.theme}
-                  </span>
-                  <span className={styles.duLibraryCount}>{v.count} 条</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       <footer className={styles.footer}>
         <p className={styles.footerBrand}>小庄</p>

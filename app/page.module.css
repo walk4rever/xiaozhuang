@@ -210,6 +210,62 @@
   line-height: 1.64;
 }
 
+.duCatalog {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(95, 124, 119, 0.18);
+}
+
+.duCatalogTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.96rem;
+  color: var(--ink-0);
+}
+
+.duGroupList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.duGroupItem {
+  margin: 0;
+}
+
+.duGroupHeader {
+  margin: 0 0 0.45rem;
+  color: var(--ink-1);
+  line-height: 1.64;
+}
+
+.duVolumeLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.duVolumeLink {
+  display: inline-block;
+  padding: 0.32rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid rgba(95, 124, 119, 0.2);
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--ink-1);
+  text-decoration: none;
+  font-size: 0.84rem;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.duVolumeLink:hover {
+  border-color: rgba(95, 124, 119, 0.34);
+  background: rgba(255, 255, 255, 0.65);
+}
+
 .duLibraryHeading {
   display: flex;
   align-items: center;

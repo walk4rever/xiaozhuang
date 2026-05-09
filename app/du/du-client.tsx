@@ -2,15 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import type { DailyRunWithPassage, VolumeInfo } from '@/lib/du-server'
-
-const VOLUME_CHINESE: Record<number, string> = {
-  1: '一', 2: '二', 3: '三', 4: '四', 5: '五',
-  6: '六', 7: '七', 8: '八', 9: '九', 10: '十',
-  11: '十一', 12: '十二', 13: '十三', 14: '十四', 15: '十五',
-  16: '十六', 17: '十七', 18: '十八', 19: '十九', 20: '二十',
-  21: '二十一', 22: '二十二', 23: '二十三', 24: '二十四', 25: '二十五', 26: '二十六',
-}
+import type { DailyRunWithPassage } from '@/lib/du-server'
 
 interface Props {
   recentRuns: DailyRunWithPassage[]
@@ -19,12 +11,11 @@ interface Props {
     pageSize: number
     total: number
   }
-  volumes: VolumeInfo[]
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export default function DuClient({ recentRuns, pagination, volumes }: Props) {
+export default function DuClient({ recentRuns, pagination }: Props) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -118,52 +109,6 @@ export default function DuClient({ recentRuns, pagination, volumes }: Props) {
         {message ? <p className="du-success">{message}</p> : null}
         {error ? <p className="du-error">{error}</p> : null}
       </section>
-
-      <section className="panel du-panel du-about-panel">
-        <h2>关于这本书</h2>
-        <p className="du-about-intro">
-          《经史百家杂钞》是曾国藩历时数年亲手编选的古文读本，从经、史、子、集四部广泛选材，汇集百家，取精去芜。
-          他在军务繁忙之际仍坚持选编，正因相信：读古文是一种修身的功夫，而非单纯积累知识。
-        </p>
-        <div className="du-about-criteria">
-          <div className="du-about-criterion">
-            <span className="du-about-label">选文标准</span>
-            <span className="du-about-value"><strong>义理</strong>（思想正）· <strong>考据</strong>（事实准）· <strong>词章</strong>（文字美）</span>
-          </div>
-          <div className="du-about-criterion">
-            <span className="du-about-label">编纂总纲</span>
-            <span className="du-about-value"><strong>文以载道、经世致用</strong> — 古文不是摆设，是用来解决真实问题的</span>
-          </div>
-          <div className="du-about-criterion">
-            <span className="du-about-label">十一文体</span>
-            <span className="du-about-value">论著 · 序跋 · 诏令 · 奏议 · 书牍 · 哀祭 · 传志 · 叙记 · 词赋 · 典志 · 杂记</span>
-          </div>
-        </div>
-        <p className="du-about-why">
-          如果你想读古文但不知从哪里下手，这本书是一个诚实的答案——这是一个真正用古文做事的人，替你筛过的书单。
-        </p>
-      </section>
-
-      {volumes.length > 0 && (
-        <section className="panel du-panel">
-          <h2 className="du-admin-heading">
-            书库
-            <span className="du-library-book-total">{volumes.reduce((s, v) => s + v.count, 0)} 条</span>
-          </h2>
-          <ul className="du-library-volume-list">
-            {volumes.map((v) => (
-              <li key={v.volume} className="du-library-volume-item">
-                <Link href={`/du/library/${v.volume}`} className="du-library-volume-link">
-                  <span className="du-library-volume-name">
-                    卷{VOLUME_CHINESE[v.volume] ?? v.volume} · {v.theme}
-                  </span>
-                  <span className="du-library-volume-count">{v.count} 条</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {recentRuns.length > 0 && (
         <section id="du-recent" className="panel du-panel">

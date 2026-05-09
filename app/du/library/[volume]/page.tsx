@@ -55,7 +55,7 @@ export default async function VolumePage({ params }: Props) {
         <div className="du-mountain-layer" aria-hidden="true" />
         <div className="seal">卷</div>
         <div className="hero-text du-hero-text">
-          <Link href="/du" className="back-link">← 慢读</Link>
+          <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">{info?.source_book ?? '经史百家杂钞'}</p>
           <h1>{label}</h1>
           <p className="description">{articles.length} 篇，共 {info?.count ?? 0} 条</p>

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getRecentRunsPaged, getLibraryVolumes, type VolumeInfo } from '@/lib/du-server'
+import { getRecentRunsPaged } from '@/lib/du-server'
 import DuClient from './du-client'
 
 export const dynamic = 'force-dynamic'
@@ -19,16 +19,12 @@ export default async function DuPage({ searchParams }: Props) {
   const { page: pageRaw } = await searchParams
   const currentPage = Math.max(1, parseInt(pageRaw ?? '1', 10) || 1)
 
-  const [{ items: recentRuns, total }, volumes] = await Promise.all([
-    getRecentRunsPaged(currentPage, PAGE_SIZE).catch(() => ({ items: [], total: 0 })),
-    getLibraryVolumes().catch(() => [] as VolumeInfo[]),
-  ])
+  const { items: recentRuns, total } = await getRecentRunsPaged(currentPage, PAGE_SIZE).catch(() => ({ items: [], total: 0 }))
 
   return (
     <DuClient
       recentRuns={recentRuns}
       pagination={{ page: currentPage, pageSize: PAGE_SIZE, total }}
-      volumes={volumes}
     />
   )
 }
