@@ -3,6 +3,8 @@ import styles from './page.module.css'
 import { StarMap } from './du/library/StarMap'
 import { getLibraryVolumes, getStarMapAuthors, type VolumeInfo } from '@/lib/du-server'
 
+export const dynamic = 'force-dynamic'
+
 const features = [
   {
     href: '/xun',
