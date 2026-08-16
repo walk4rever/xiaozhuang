@@ -70,7 +70,7 @@ export default async function VolumePage({ params }: Props) {
               <ul className="du-library-article-sublist">
                 {arts.map((a) => (
                   <li key={a.first_id} className="du-library-article-item">
-                    <Link href={`/du/preview/${a.first_id}`} className="du-library-article-link">
+                    <Link href={`/du/article/${a.first_id}`} className="du-library-article-link">
                       {a.base_title}
                     </Link>
                     {a.segment_count > 1 && (

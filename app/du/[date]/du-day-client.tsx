@@ -11,6 +11,7 @@ import {
   SHARE_QR_SIZE,
   SHARE_WIDTH,
 } from '@/lib/share-card'
+import { renderSimpleMarkdown } from '@/lib/text-format'
 
 const VOLUME_CHINESE: Record<number, string> = {
   1: '一', 2: '二', 3: '三', 4: '四', 5: '五',
@@ -55,16 +56,6 @@ function buildAttribution(
     line += `｜第 ${context.currentIndex} 段，共 ${context.totalSegments} 段`
   }
   return line
-}
-
-// ---------------------------------------------------------------------------
-// Simple markdown renderer (bold + numbered lists only)
-// ---------------------------------------------------------------------------
-const renderSimpleMarkdown = (text: string): string => {
-  return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n(\d+)\.\s/g, '<br/><b>$1.</b> ')
-    .replace(/^\n/, '')
 }
 
 // ---------------------------------------------------------------------------

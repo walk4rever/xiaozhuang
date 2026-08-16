@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`/xun`** (寻章) — describe a scene or upload a photo → LLM finds a matching classical line, with source + explanation. Vision-capable in principle, but currently **disabled on the homepage** (`ready: false` in `app/page.tsx`) because the configured `AI_API_BASE_URL` (DeepSeek) has no vision model — see AI provider note below.
 - **`/gua`** (问心) — I-Ching divination: client simulates yarrow-stalk hexagram casting, LLM interprets. Interpretations are cached in Supabase (`xz_gua_interpretations`) keyed by hexagram + changing lines.
 - **`/xie`** (述怀) — writes a short classical-style passage in the user's chosen voice (楚辞/道家/史传/词/禅语/唐宋古文/骈文/心学), from a modern feeling described by the user.
-- **`/du`** (慢读) — daily email digest of 经史百家杂钞 (a Qing-dynasty classical prose anthology curated by Zeng Guofan). Has its own subscription flow, admin panel (`/du/admin`), a "library" browser by volume (`/du/library`), and an author "star map" visualization.
+- **`/du`** (慢读) — daily email digest of 经史百家杂钞 (a Qing-dynasty classical prose anthology curated by Zeng Guofan). Has its own subscription flow, admin panel (`/du/admin`), a "library" browser by volume (`/du/library`), an author "star map" visualization, and a consolidated per-article reading view (`/du/article/[id]`, see below).
 
 Each module is a self-contained `page.tsx` + `<name>-client.tsx` + `<name>.css` under `app/<name>/`. There is no shared component library between modules — shared logic lives in `lib/`.
 
@@ -61,9 +61,13 @@ Daily send flow: `app/api/du/cron/prepare` picks an unsent passage (`pickTodayPa
 
 Author/article metadata (`xz_du_authors`, `xz_du_articles`) is lazily backfilled the first time a passage from a new author/article is touched (`enrichPassageMeta`), rather than pre-populated for all rows.
 
+**Consolidated article view** (`/du/article/[id]`, `app/du/article/[id]/article-client.tsx`): reads a whole multi-segment article in one page instead of jumping between per-segment pages. `getArticleView` in `lib/du-server.ts` takes any segment's passage id, resolves all sibling segments (same `source_origin` + base title, read-only), and returns them together. Every article has exactly one canonical URL — its first segment's id — visiting any other segment's id 307-redirects to it. Desktop (≥880px) renders a two-column reader (left: full original text, click a segment to select it; right: that segment's interpretation, `position: sticky`); below 880px the right column collapses into a bottom sheet (same open/close pattern as the existing share-image sheet) instead of a second column. `/du/library/[volume]` and `/du/author/[name]` article lists link here now, not to `/du/preview/[id]` (which still exists and still works, just isn't linked from those two listing pages anymore). This is purely additive/read-only — it does not touch the cron send flow, the email template, or any existing route.
+
 ### Share cards
 
 `lib/share-card.ts` is a client-only Canvas-based share-image generator shared by all four modules (each module still builds its own canvas layout, but footer branding/QR code, blob conversion, and the Web Share API fallback are centralized here). It's safe to import from `'use client'` components since Canvas APIs only run inside functions, never at module scope.
+
+`lib/text-format.ts` holds `renderSimpleMarkdown` (bold + numbered lists only), shared between `du-day-client.tsx` and the article view's `article-client.tsx` — both render the AI-generated `structure` field through it.
 
 ### Routing quirks
 

@@ -322,6 +322,47 @@ export const getPassageContext = async (
   }
 }
 
+export type ArticleView = {
+  baseTitle: string
+  sourceOrigin: string
+  sourceBook: string
+  volume: number | null
+  theme: string | null
+  segments: Passage[]
+  author: Author | null
+  article: Article | null
+}
+
+// Resolves the full article (all segments, in order) that a given passage
+// belongs to, keyed by source_origin + base title (segments share a title
+// like "篇名（1）", "篇名（2）"). Accepts any segment's id as the anchor.
+export const getArticleView = async (passageId: number): Promise<ArticleView | null> => {
+  const anchor = await getPassageById(passageId)
+  if (!anchor || !anchor.source_origin || !anchor.title) return null
+
+  const { base } = parseSegment(anchor.title)
+  const sourceOrigin = anchor.source_origin
+
+  const [segments, author, article] = await Promise.all([
+    supabaseFetch<Passage[]>(
+      `xz_du_passages?select=id,source_book,source_origin,title,content,difficulty,theme,volume,payload&source_origin=eq.${encodeURIComponent(sourceOrigin)}&title=like.${encodeURIComponent(base + '%')}&enabled=eq.true&order=id.asc`
+    ),
+    getAuthor(sourceOrigin).catch(() => null),
+    getArticle(sourceOrigin, base).catch(() => null),
+  ])
+
+  return {
+    baseTitle: base,
+    sourceOrigin,
+    sourceBook: anchor.source_book,
+    volume: anchor.volume ?? null,
+    theme: anchor.theme,
+    segments,
+    author,
+    article,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Daily runs
 // ---------------------------------------------------------------------------

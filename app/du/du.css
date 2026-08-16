@@ -1084,3 +1084,230 @@
   text-decoration: underline;
   text-underline-offset: 0.22em;
 }
+
+/* ── 整合阅读页（/du/article） ──────────────────── */
+
+.du-article-backlinks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.du-article-backlinks-sep {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+
+.du-article-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 两栏布局：左侧通读原文，右侧联动显示当前段落解读 */
+.du-article-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (min-width: 880px) {
+  /* 单栏阅读宽度（800px）在两栏时太挤——放宽整页容器 */
+  .du-article-app {
+    max-width: 1200px;
+  }
+
+  .du-article-layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 2.25rem;
+  }
+}
+
+.du-article-reading {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+/* 每一段原文——可点击，联动右侧解读面板 */
+.du-article-para {
+  display: block;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.15rem;
+  cursor: pointer;
+  border-radius: 10px;
+  scroll-margin-top: 1.5rem;
+  transition: background 0.15s;
+}
+
+.du-article-para:hover {
+  background: rgba(95, 124, 119, 0.06);
+}
+
+.du-article-para .du-day-origin {
+  border-left: none;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.du-article-reading .du-day-meta {
+  border-left: none;
+  border-radius: 10px;
+}
+
+.du-article-para.is-active .du-day-origin {
+  background: rgba(95, 124, 119, 0.1);
+}
+
+.du-article-para-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-right: 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  color: var(--ink-2);
+  background: rgba(95, 124, 119, 0.1);
+  vertical-align: middle;
+  transition: color 0.15s, background 0.15s;
+}
+
+.du-article-para.is-active .du-article-para-num {
+  color: #fbf8f1;
+  background: var(--shanshui-primary);
+}
+
+/* 右侧解读面板：桌面端粘性侧栏，移动端底部抽屉 */
+.du-article-gloss-panel {
+  background: rgba(95, 124, 119, 0.05);
+  border: 1px solid rgba(95, 124, 119, 0.14);
+  border-radius: 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.du-article-gloss-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 1rem 1.2rem 0;
+}
+
+.du-article-gloss-topbar-title {
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0.05rem;
+  color: var(--shanshui-primary);
+}
+
+.du-article-gloss-close {
+  display: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: none;
+  background: none;
+  color: var(--ink-2);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.du-article-gloss-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0.9rem 1.2rem 1.2rem;
+  overflow-y: auto;
+}
+
+.du-article-gloss-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.du-article-gloss-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* 右侧解读面板是辅助阅读，字号应略小于/等于左侧原文（1.05rem），而不是更大 */
+.du-article-gloss-panel .du-day-content {
+  font-size: 0.98rem;
+}
+
+.du-article-gloss-panel .du-day-summary {
+  font-size: 1rem;
+}
+
+.du-article-gloss-panel .du-day-keywords li {
+  font-size: 0.92rem;
+}
+
+.du-article-sheet-backdrop {
+  display: none;
+}
+
+@media (min-width: 880px) {
+  /* 左栏原文全部展开，跟随页面自然滚动；
+     右栏解读随手跟随（sticky），内容一般不会比视口高，
+     万一某段解读特别长，才会在自己的高度上限内单独滚动 */
+  .du-article-gloss-panel {
+    position: sticky;
+    top: 1.5rem;
+    max-height: calc(100vh - 3rem);
+  }
+}
+
+@media (max-width: 879px) {
+  .du-article-gloss-panel {
+    position: fixed;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    max-height: 76vh;
+    box-shadow: 0 -16px 40px rgba(35, 28, 20, 0.22);
+    transform: translateY(calc(100% + 1rem));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.24s ease, opacity 0.24s ease;
+    z-index: 60;
+  }
+
+  .du-article-gloss-panel.is-open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .du-article-gloss-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .du-article-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(28, 23, 18, 0.32);
+    z-index: 55;
+    opacity: 0;
+    animation: du-article-sheet-fade 0.2s ease forwards;
+  }
+
+  @keyframes du-article-sheet-fade {
+    to { opacity: 1; }
+  }
+}

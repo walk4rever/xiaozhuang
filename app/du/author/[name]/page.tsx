@@ -81,7 +81,7 @@ export default async function AuthorPage({ params }: Props) {
                 <ul className="du-library-article-sublist">
                   {entries.map((a) => (
                     <li key={a.first_id} className="du-library-article-item">
-                      <Link href={`/du/preview/${a.first_id}`} className="du-library-article-link">
+                      <Link href={`/du/article/${a.first_id}`} className="du-library-article-link">
                         {a.base_title || '未命名'}
                       </Link>
                       {a.segment_count > 1 && (
