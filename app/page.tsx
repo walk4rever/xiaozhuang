@@ -11,7 +11,8 @@ const features = [
     icon: '寻',
     title: '寻章',
     desc: '描述一个场景，或上传一张照片，帮你找到最贴切的那句话',
-    ready: true,
+    ready: false,
+    badgeText: '暂不可用',
     emphasis: '见意',
   },
   {
@@ -88,7 +89,7 @@ export default async function Home() {
               <h2 className={styles.cardTitle}>
                 {f.title}
                 {f.emphasis && <span className={styles.emphasis}>{f.emphasis}</span>}
-                {!f.ready && <span className={styles.badge}>即将推出</span>}
+                {!f.ready && <span className={styles.badge}>{f.badgeText ?? '即将推出'}</span>}
               </h2>
               <p className={styles.cardDesc}>{f.desc}</p>
             </div>

@@ -139,7 +139,7 @@ const server = createServer(async (req, res) => {
   }
 
   const model = hasVisionInput(messages) ? VISION_MODEL : PRIMARY_MODEL
-  const upstreamBody = { model, messages, temperature, stream: true }
+  const upstreamBody = { model, messages, temperature, stream: true, thinking: { type: 'disabled' } }
   if (max_tokens) upstreamBody.max_tokens = max_tokens
 
   console.log(`[llm-proxy] ${new Date().toISOString()} model=${model} msgs=${messages.length}`)

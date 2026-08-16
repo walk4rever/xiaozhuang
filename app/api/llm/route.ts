@@ -86,6 +86,13 @@ export async function POST(request: Request) {
   const openai = createOpenAI({
     baseURL: stripChatCompletionsPath(rawBaseUrl),
     apiKey,
+    fetch: async (url, init) => {
+      if (typeof init?.body === 'string') {
+        const upstreamBody = { ...JSON.parse(init.body), thinking: { type: 'disabled' } }
+        return fetch(url, { ...init, body: JSON.stringify(upstreamBody) })
+      }
+      return fetch(url, init)
+    },
   })
 
   const result = streamText({
