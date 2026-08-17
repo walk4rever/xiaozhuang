@@ -95,6 +95,9 @@ const env = {
   duFromEmail: process.env.DU_FROM_EMAIL,
   duAdminEmail: process.env.DU_ADMIN_EMAIL,
   cronSecret: process.env.CRON_SECRET,
+  // 慢读 payload/作者简介生成統一走 relay（与寻章/问心/述怀三个客户端模块同一个上游），
+  // 不再自调用本应用的 /api/llm —— 该路由已删除，见 CLAUDE.md「LLM access」一节。
+  duLlmUrl: process.env.NEXT_PUBLIC_LLM_URL,
 }
 
 const required = (value: string | undefined, name: string): string => {
@@ -553,7 +556,7 @@ export const generateDuPayload = async (passage: Passage): Promise<DuOutput> => 
     content: passage.content,
   })
 
-  const url = `${env.appBaseUrl}/api/llm`
+  const url = required(env.duLlmUrl, 'NEXT_PUBLIC_LLM_URL')
   const body = JSON.stringify({
     messages: [
       { role: 'system', content: DU_SYSTEM_PROMPT },
@@ -630,7 +633,7 @@ export const upsertArticle = async (sourceOrigin: string, baseTitle: string, bac
 }
 
 const generateTextWithLLM = async (systemPrompt: string, userContent: string): Promise<string> => {
-  const url = `${env.appBaseUrl}/api/llm`
+  const url = required(env.duLlmUrl, 'NEXT_PUBLIC_LLM_URL')
   const body = JSON.stringify({
     messages: [
       { role: 'system', content: systemPrompt },

@@ -1,8 +1,17 @@
 /**
- * Lightweight LLM streaming proxy for relay.air7.fun
+ * The one and only LLM entrypoint for 小庄 (xiaozhuang) — relay.air7.fun.
  *
- * Receives the same request format as /api/llm, forwards to upstream
- * (火山方舟) with streaming, and pipes plain text back to the client.
+ * As of 2026-08-17 this is not a mirror of an in-app route anymore: the
+ * former app/api/llm/route.ts (Vercel Edge) was deleted, and every LLM call
+ * — the three client generators (寻章/问心/述怀) via NEXT_PUBLIC_LLM_URL, and
+ * 慢读's server-side payload/author-bio generation in lib/du-server.ts — goes
+ * through this single process. Keeping one runtime config here (rather than
+ * duplicating AI_API_KEY/AI_API_BASE_URL/etc on Vercel too) is what avoids
+ * the two configs drifting out of sync with each other.
+ *
+ * Accepts { messages, temperature, max_tokens }, forwards to the upstream
+ * provider (currently DeepSeek) with streaming, and pipes plain text back
+ * to the caller — same wire format regardless of caller.
  *
  * No dependencies — uses Node.js built-in http + native fetch.
  *
