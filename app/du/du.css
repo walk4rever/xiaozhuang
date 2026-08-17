@@ -31,6 +31,21 @@
   opacity: 0.92;
 }
 
+.seal {
+  position: relative;
+  z-index: 1;
+  width: 90px;
+  height: 90px;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #8b4a3c, #a55d4e);
+  display: grid;
+  place-items: center;
+  font-family: 'Ma Shan Zheng', cursive;
+  font-size: 2.8rem;
+  color: #f6efe5;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.12), 0 10px 24px rgba(139, 74, 60, 0.16);
+}
+
 .du-hero-text {
   position: relative;
   z-index: 1;
@@ -699,7 +714,7 @@
 }
 
 .du-admin-seg-nav-disabled {
-  color: var(--ink-3, #ccc);
+  color: var(--ink-3);
   pointer-events: none;
 }
 
@@ -988,7 +1003,7 @@
 
 .du-library-segment-hint {
   font-size: 0.78rem;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .du-library-entry {

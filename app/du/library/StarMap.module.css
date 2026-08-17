@@ -28,12 +28,21 @@
   position: relative;
   height: 340px;
   width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  cursor: default;
+}
+
+/* 星点用百分比定位，而避碰算法按 1000×300 的虚拟画布计算，
+   所以画布必须保持足够宽度，窄屏改为横向滚动而不是压缩。 */
+.sky {
+  position: relative;
+  width: 100%;
+  height: 100%;
   background:
     radial-gradient(ellipse at 15% 40%, rgba(180, 160, 200, 0.08) 0%, transparent 55%),
     radial-gradient(ellipse at 85% 25%, rgba(140, 180, 200, 0.06) 0%, transparent 50%),
     linear-gradient(180deg, #f9f5ee 0%, #f4ede0 100%);
-  overflow: hidden;
-  cursor: default;
 }
 
 .dynastyLabel {
@@ -147,8 +156,19 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 820px) {
+  .skyWrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sky {
+    min-width: 780px;
+  }
+}
+
 @media (max-width: 640px) {
   .skyWrap {
-    height: 280px;
+    height: 300px;
   }
 }

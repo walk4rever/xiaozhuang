@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type MouseEvent } from 'react'
+import { useMemo, useState, type MouseEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import styles from './StarMap.module.css'
 import type { StarMapAuthor } from '@/lib/du-server'
@@ -159,30 +159,55 @@ function placeStars(authors: StarMapAuthor[], minScore: number, maxScore: number
   return placed
 }
 
+type TooltipPos = { x: number; y: number; flip: boolean }
+
+function tooltipPosFrom(e: MouseEvent): TooltipPos {
+  return {
+    x: e.clientX,
+    y: e.clientY,
+    flip: e.clientX > window.innerWidth * 0.6,
+  }
+}
+
 export function StarMap({ authors }: { authors: StarMapAuthor[] }) {
   const router = useRouter()
   const [hovered, setHovered] = useState<StarMapAuthor | null>(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-  const { min, max } = scoreRange(authors)
-  const stars = placeStars(authors, min, max)
+  const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0, flip: false })
+
+  const stars = useMemo(() => {
+    const { min, max } = scoreRange(authors)
+    return placeStars(authors, min, max)
+  }, [authors])
 
   const handleMouseEnter = (author: StarMapAuthor, e: MouseEvent) => {
     setHovered(author)
-    setTooltipPos({ x: e.clientX, y: e.clientY })
+    setTooltipPos(tooltipPosFrom(e))
   }
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (hovered) setTooltipPos({ x: e.clientX, y: e.clientY })
+    if (hovered) setTooltipPos(tooltipPosFrom(e))
+  }
+
+  // 触屏没有 hover：第一次点亮预览，第二次才跳转。
+  // 桌面端 hover 已经写入 hovered，所以单击仍然直接跳转。
+  const handleStarClick = (author: StarMapAuthor, e: MouseEvent) => {
+    if (hovered?.name !== author.name) {
+      setHovered(author)
+      setTooltipPos(tooltipPosFrom(e))
+      return
+    }
+    router.push(`/du/author/${encodeURIComponent(author.name)}`)
   }
 
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
         <h2 className={styles.title}>中华文脉星空图</h2>
-        <p className={styles.subtitle}>两千年·百五十人·璀璨如星</p>
+        <p className={styles.subtitle}>两千年·{authors.length} 人·璀璨如星</p>
       </div>
 
       <div className={styles.skyWrap} onMouseMove={handleMouseMove} onMouseLeave={() => setHovered(null)}>
+        <div className={styles.sky}>
         {DYNASTIES.map((d) => (
           <span key={d.name} className={styles.dynastyLabel} style={{ left: `${dynastyX(d.name)}%` }}>
             <span
@@ -214,27 +239,28 @@ export function StarMap({ authors }: { authors: StarMapAuthor[] }) {
                 : '0 0 0 1px rgba(93, 58, 22, 0.12), 0 0 8px rgba(122, 104, 86, 0.28)',
             }}
             onMouseEnter={(e) => handleMouseEnter(s.author, e)}
-            onClick={() => router.push(`/du/author/${encodeURIComponent(s.author.name)}`)}
-            aria-label={s.author.name}
+            onClick={(e) => handleStarClick(s.author, e)}
+            aria-label={`${s.author.name}（${s.author.dynasty}·${s.author.article_count} 篇），查看其选文`}
           />
         ))}
-
-        {hovered && (
-          <div
-            className={styles.tooltip}
-            style={{
-              position: 'fixed',
-              left: tooltipPos.x + 14,
-              top: tooltipPos.y - 40,
-            }}
-          >
-            <span className={styles.tooltipName}>{hovered.name}</span>
-            <span className={styles.tooltipMeta}>
-              {hovered.dynasty} · {hovered.article_count} 篇 · {hovered.total_chars} 字
-            </span>
-          </div>
-        )}
+        </div>
       </div>
+
+      {hovered && (
+        <div
+          className={styles.tooltip}
+          style={
+            tooltipPos.flip
+              ? { position: 'fixed', right: window.innerWidth - tooltipPos.x + 14, top: Math.max(8, tooltipPos.y - 40) }
+              : { position: 'fixed', left: tooltipPos.x + 14, top: Math.max(8, tooltipPos.y - 40) }
+          }
+        >
+          <span className={styles.tooltipName}>{hovered.name}</span>
+          <span className={styles.tooltipMeta}>
+            {hovered.dynasty} · {hovered.article_count} 篇 · {hovered.total_chars} 字
+          </span>
+        </div>
+      )}
     </div>
   )
 }

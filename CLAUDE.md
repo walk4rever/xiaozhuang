@@ -6,12 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 小庄 (xiaozhuang) — a Chinese-language Next.js app that surfaces classical Chinese poetry/prose/I-Ching wisdom for modern expression. Four modules under `app/`:
 
-- **`/xun`** (寻章) — describe a scene or upload a photo → LLM finds a matching classical line, with source + explanation. Vision-capable in principle, but currently **disabled on the homepage** (`ready: false` in `app/page.tsx`) because the configured `AI_API_BASE_URL` (DeepSeek) has no vision model — see AI provider note below.
+- **`/xun`** (寻章) — describe a scene → LLM finds a matching classical line, with source + explanation. Vision-capable in principle (photo upload, image compression pipeline, photo-template share card all still implemented), but the photo-upload entry point is currently **hidden** via `PHOTO_INPUT_ENABLED = false` in `app/xun/xun-client.tsx` because the upstream (DeepSeek) has no vision model — see AI provider note below. The text-only flow itself is unaffected and `ready: true` on the homepage.
 - **`/gua`** (问心) — I-Ching divination: client simulates yarrow-stalk hexagram casting, LLM interprets. Interpretations are cached in Supabase (`xz_gua_interpretations`) keyed by hexagram + changing lines.
 - **`/xie`** (述怀) — writes a short classical-style passage in the user's chosen voice (楚辞/道家/史传/词/禅语/唐宋古文/骈文/心学), from a modern feeling described by the user.
 - **`/du`** (慢读) — daily email digest of 经史百家杂钞 (a Qing-dynasty classical prose anthology curated by Zeng Guofan). Has its own subscription flow, admin panel (`/du/admin`), a "library" browser by volume (`/du/library`), an author "star map" visualization, and a consolidated per-article reading view (`/du/article/[id]`, see below).
 
-Each module is a self-contained `page.tsx` + `<name>-client.tsx` + `<name>.css` under `app/<name>/`. There is no shared component library between modules — shared logic lives in `lib/`.
+Each module is a self-contained `page.tsx` + `<name>-client.tsx` + `<name>.css` under `app/<name>/`. There is no shared component library between modules for module-specific UI — shared logic lives in `lib/`. The exception is `app/components/` (added 2026-08-17), rendered from `app/layout.tsx` on every route: `SiteNav.tsx` (sticky top nav, active-state via `usePathname()`) and `SiteFooter.tsx` (footer — previously only existed on the homepage, an oversight fixed the same day). `app/page.tsx` also renders `ModuleShowcase.tsx` from there — a client component that replaced the homepage hero's static brand copy with a card that auto-rotates through the four modules' own hero content (`subtitle`/`title`/`description`/`quote`, copied verbatim from each module's `<name>-client.tsx`, not paraphrased) and links to that module. If more truly cross-module UI shows up, `app/components/` is where it goes.
 
 ## Commands
 
@@ -35,17 +35,16 @@ Content-pipeline scripts (run with `npx tsx scripts/<file>.ts`, require `SUPABAS
 
 ## Architecture
 
-### LLM access — always through `/api/llm`
+### LLM access — always through the relay, no in-app route
 
-There is exactly one LLM entrypoint: `app/api/llm/route.ts` (Edge runtime, `maxDuration = 300`, region pinned to `hkg1`). It wraps the AI SDK (`@ai-sdk/openai` + `ai`'s `streamText`) around an OpenAI-compatible upstream configured via `AI_API_KEY` / `AI_API_BASE_URL` / `AI_PRIMARY_MODEL` / `AI_VISION_MODEL`. It auto-selects the vision model when any message contains an `image_url` part, and always streams back plain text (not SSE/JSON) via `toTextStreamResponse()`.
+There is exactly one LLM entrypoint, and it is not part of this Next.js app: **`relay/llm-proxy.mjs`**, a standalone, dependency-free Node HTTP server deployed separately (`relay.air7.fun`, run via pm2 on the `air7` host). It accepts `{ messages, temperature, max_tokens }`, auto-selects the vision model when any message contains an `image_url` part, injects `thinking: { type: 'disabled' }`, and always streams back plain text (not SSE/JSON).
 
-- Client components call it via `LLM_API_URL` from `lib/llm.ts`, which resolves to `/api/llm` unless `NEXT_PUBLIC_LLM_URL` overrides it (used to point at the standalone relay below).
-- Server-side code (`lib/du-server.ts`) calls the same route over HTTP (`${APP_BASE_URL}/api/llm`) rather than importing the SDK directly, with its own retry/timeout wrapper (`timeoutFetch`, 3 attempts, 20-25s each).
-- Do not add a second LLM call path — extend `route.ts` and the shared helpers instead.
+- Client components call it via `LLM_API_URL` from `lib/llm.ts` = `process.env.NEXT_PUBLIC_LLM_URL` (no fallback — the module throws at import if unset).
+- Server-side code (`lib/du-server.ts`'s `generateDuPayload` / `generateTextWithLLM`, used by 慢读's payload and author/article backfill) calls the same relay URL via `env.duLlmUrl` (also `NEXT_PUBLIC_LLM_URL`), with its own retry/timeout wrapper (`timeoutFetch`, 3 attempts, 20-25s each).
+- Do not add a second LLM call path — extend `llm-proxy.mjs` instead.
+- **2026-08-17**: this used to be two parallel paths — an in-app Edge route `app/api/llm/route.ts` (self-called by `du-server.ts` via `${APP_BASE_URL}/api/llm`, configured with its own `AI_API_KEY`/`AI_API_BASE_URL`/`AI_PRIMARY_MODEL`/`AI_VISION_MODEL` Vercel env vars) plus the relay mirroring its contract for the three client generators. They were consolidated onto the relay alone — `route.ts` is deleted, the `AI_*` Vercel env vars are no longer read by any code path (delete them from the Vercel dashboard; that step still needs to be done manually). **Trade-off to know**: this makes the relay a single point of failure — if the `air7` pm2 process is down, *every* LLM-dependent feature is down, including 慢读's admin "regenerate" button, not just the three interactive modules.
 
-`relay/llm-proxy.mjs` is a standalone, dependency-free Node HTTP server mirroring `/api/llm`'s request/response contract, deployed separately (`relay.air7.fun`, run via pm2 on the `air7` host) to work around platform timeout limits. Keep its request/response shape in sync with `app/api/llm/route.ts` if either changes.
-
-**AI provider note**: the upstream is DeepSeek (`https://api.deepseek.com`, `deepseek-v4-flash`) — the previous 火山方舟 (Volcengine Ark) "coding plan" endpoint (`ark.cn-beijing.volces.com/api/coding/v3`) stopped accepting these models (`404 UnsupportedModel`) and was replaced. DeepSeek has no vision model, hence `/xun` being disabled above. Both `route.ts` and `llm-proxy.mjs` inject `thinking: { type: 'disabled' }` into the upstream request body — `deepseek-v4-flash` is a reasoning model that otherwise burns the shared `max_tokens` budget on hidden `reasoning_content` before emitting the actual answer, which silently produces empty responses for prompts that need more "thought" (observed on `/xie`).
+**AI provider note**: the upstream is DeepSeek (`https://api.deepseek.com`, `deepseek-v4-flash`) — the previous 火山方舟 (Volcengine Ark) "coding plan" endpoint (`ark.cn-beijing.volces.com/api/coding/v3`) stopped accepting these models (`404 UnsupportedModel`) and was replaced. DeepSeek has no vision model, hence `/xun`'s photo input being hidden above. `llm-proxy.mjs` injects `thinking: { type: 'disabled' }` into the upstream request body — `deepseek-v4-flash` is a reasoning model that otherwise burns the shared `max_tokens` budget on hidden `reasoning_content` before emitting the actual answer, which silently produces empty responses for prompts that need more "thought" (observed on `/xie`).
 
 ### Data access — raw Supabase REST, no ORM/client SDK
 
@@ -77,4 +76,14 @@ Author/article metadata (`xz_du_authors`, `xz_du_articles`) is lazily backfilled
 
 See `README.md` for the full `.env.local` variable table. Required for local dev: `AI_API_KEY`, `AI_API_BASE_URL`, `AI_PRIMARY_MODEL` (LLM); `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (慢读 + 问心 caching); `RESEND_API_KEY`, `DU_FROM_EMAIL` (慢读 email); `CRON_SECRET`, `APP_BASE_URL` (cron protection).
 
-`PRODUCT.md` and `TODO.md` are gitignored internal docs — present locally but not tracked; don't assume they exist in a fresh checkout.
+## Documentation
+
+This project maintains exactly **three** documents at the repo root — do not create new doc files or a `docs/` directory (a `docs/` folder existed and was merged back into `PRODUCT.md` on 2026-08-17):
+
+- `README.md` — outward-facing: what 小庄 is, setup, env var table. Tracked.
+- `PRODUCT.md` — product design: positioning, module roles, roadmap, visual system, 文库星图 spec. Gitignored.
+- `TODO.md` — tasks: current priorities, open decisions, known defects/tech debt, completed log. Gitignored.
+
+Anything that would otherwise become a new design note, handoff, or review write-up goes into `PRODUCT.md` (design intent) or `TODO.md` (work items and decisions). `PRODUCT.md`/`TODO.md` are present locally but not tracked — don't assume they exist in a fresh checkout.
+
+(`CHANGELOG.md` and `data/library-progress.md` also exist but are release/pipeline ledgers, not docs.)

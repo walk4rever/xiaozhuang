@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import {
   canvasToBlob,
   drawShareFooter,
@@ -53,6 +52,10 @@ const SYSTEM_PROMPT = `你是"寻章"，一位深谙中国古典诗词与古文�
 2. 诗词、古文、辞赋均可，不限于唐诗宋词
 3. 白话解读要深入浅出，让不懂古文的人也能感受到美
 4. 共鸣连接要具体，不要泛泛而谈`
+
+// 照片寻章依赖 vision 模型，当前上游（DeepSeek）没有提供，故暂时隐藏入口。
+// 上游支持 vision 后改回 true 即可，图片处理与照片版分享卡的实现均保持完好。
+const PHOTO_INPUT_ENABLED = false
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024
 const MAX_IMAGE_BYTES = 1 * 1024 * 1024
@@ -545,58 +548,61 @@ export default function XunClient() {
         <div className="xun-mountain-layer" aria-hidden="true" />
         <div className="seal">章</div>
         <div className="hero-text">
-          <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">观景 · 体情 · 寻意</p>
           <h1>寻章</h1>
           <p className="description">
-            描述你看到的、感受到的，或直接上传一张照片，小庄从千年诗文中，帮你找到最贴切的那句话。
+            描述你看到的、感受到的，小庄从千年诗文中，帮你找到最贴切的那句话。
           </p>
           <p className="xun-hero-quote">一峰则太华千寻，一勺则江湖万里</p>
         </div>
       </header>
 
       <section className="panel xun-input-panel">
-        <div className="xun-upload-row">
-          <button
-            type="button"
-            className="xun-upload-button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading || isPreparingImage}
-          >
-            {isPreparingImage ? '图片处理中…' : image ? '重新选择照片' : '拍照 / 上传照片'}
-          </button>
-          <input
-            ref={fileInputRef}
-            className="xun-file-input"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
-        </div>
-
-        {image ? (
-          <div className="xun-image-preview-wrap">
-            <div className="xun-image-preview-stage">
-              <img src={image.dataUrl} alt="待寻章照片" className="xun-image-preview" />
-            </div>
-            <div className="xun-image-meta">
-              <span>
-                已预处理 · JPEG · {image.width}×{image.height} · {(image.sizeBytes / 1024 / 1024).toFixed(2)} MB
-              </span>
-              <button type="button" className="xun-clear-image" onClick={clearImage}>
-                移除
+        {PHOTO_INPUT_ENABLED && (
+          <>
+            <div className="xun-upload-row">
+              <button
+                type="button"
+                className="xun-upload-button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || isPreparingImage}
+              >
+                {isPreparingImage ? '图片处理中…' : image ? '重新选择照片' : '拍照 / 上传照片'}
               </button>
+              <input
+                ref={fileInputRef}
+                className="xun-file-input"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
             </div>
-          </div>
-        ) : (
-          <div className="xun-upload-hint">
-            上传后会自动做格式规范化、尺寸约束与体积压缩。你也可以再补一句感受，比如“这张图让我想到离别”。
-          </div>
+
+            {image ? (
+              <div className="xun-image-preview-wrap">
+                <div className="xun-image-preview-stage">
+                  <img src={image.dataUrl} alt="待寻章照片" className="xun-image-preview" />
+                </div>
+                <div className="xun-image-meta">
+                  <span>
+                    已预处理 · JPEG · {image.width}×{image.height} · {(image.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                  <button type="button" className="xun-clear-image" onClick={clearImage}>
+                    移除
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="xun-upload-hint">
+                上传后会自动做格式规范化、尺寸约束与体积压缩。你也可以再补一句感受，比如“这张图让我想到离别”。
+              </div>
+            )}
+          </>
         )}
 
         <textarea
           className="xun-textarea"
-          placeholder="比如：秋天傍晚，满地银杏叶，金色的光洒在路上…… 也可以只上传照片。"
+          placeholder="比如：秋天傍晚，满地银杏叶，金色的光洒在路上……"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {

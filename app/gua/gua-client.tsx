@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import zhouyi from '@/data/zhouyi.json'
-import Link from 'next/link'
 import { drawShareFooter, SHARE_MARGIN, SHARE_QR_SIZE, SHARE_WIDTH } from '@/lib/share-card'
 import { LLM_API_URL } from '@/lib/llm'
 
@@ -1008,7 +1007,6 @@ export default function GuaClient() {
         <div className="gua-mountain-layer" aria-hidden="true" />
         <div className="seal">心</div>
         <div className="hero-text gua-hero-text">
-          <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">静心 · 观变 · 明行</p>
           <h1>问心</h1>
           <p className="description">

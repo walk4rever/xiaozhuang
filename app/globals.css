@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&family=Ma+Shan+Zheng&display=swap');
-
 :root {
   font-family: 'Noto Serif SC', 'Songti SC', STSong, serif;
   line-height: 1.8;
@@ -18,6 +16,8 @@
   --ink-0: #241f1b;
   --ink-1: #4f4842;
   --ink-2: #746d64;
+  /* 仅用于禁用态与纯装饰分隔符：对比度低于 AA，不要用于正文信息 */
+  --ink-3: #9a9284;
 
   --shanshui-primary: #58746e;
   --shanshui-secondary: #748a83;

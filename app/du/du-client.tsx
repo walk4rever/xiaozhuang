@@ -74,7 +74,6 @@ export default function DuClient({ recentRuns, pagination }: Props) {
         <div className="du-mountain-layer" aria-hidden="true" />
         <div className="seal">读</div>
         <div className="hero-text du-hero-text">
-          <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">日读 · 慢研 · 养成</p>
           <h1>慢读</h1>
           <p className="description">

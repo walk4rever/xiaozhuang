@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import {
   buildXieYangmingUserPrompt,
   getKnowledgeBit,
@@ -470,7 +469,6 @@ export default function XieClient() {
         <div className="xie-mountain-layer" aria-hidden="true" />
         <div className="seal">怀</div>
         <div className="hero-text xie-hero-text">
-          <Link href="/" className="back-link">← 小庄</Link>
           <p className="subtitle">立诚 · 明心 · 见行</p>
           <h1>述怀</h1>
           <p className="description">

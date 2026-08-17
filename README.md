@@ -66,10 +66,8 @@ npm run dev
 新建 `.env.local`：
 
 ```bash
-AI_API_KEY=your-api-key
-AI_API_BASE_URL=https://your-provider.example.com/v1
-AI_PRIMARY_MODEL=your-text-model
-AI_VISION_MODEL=your-vision-model
+# LLM 请求全部经 relay 转发（relay/llm-proxy.mjs，独立部署，AI_API_KEY 等只配在那边）
+NEXT_PUBLIC_LLM_URL=https://relay.your-domain.com/llm
 
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
@@ -83,8 +81,7 @@ APP_BASE_URL=https://your-domain.com
 
 | 变量 | 说明 |
 |------|------|
-| `AI_PRIMARY_MODEL` | 主文本模型，用于寻章、问心、述怀 |
-| `AI_VISION_MODEL` | 视觉模型，用于寻章照片输入；未配置则回退到主模型 |
+| `NEXT_PUBLIC_LLM_URL` | 唯一的 LLM 入口地址，寻章/问心/述怀与慢读的 payload 生成都走它；应用本身不再直连模型 provider，模型/vision 配置在 `relay/llm-proxy.mjs` 部署环境里 |
 | `SUPABASE_*` | 慢读订阅、退订与每日发送记录 |
 | `RESEND_API_KEY` | 每日慢读邮件发送 |
 | `CRON_SECRET` | 保护定时任务入口 |
