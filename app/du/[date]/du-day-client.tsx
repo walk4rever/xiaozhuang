@@ -391,6 +391,12 @@ export default function DuDayClient({ run, date, context, author, article }: Pro
   const payload = passage.payload
   const source = [passage.source_origin, passage.title].filter(Boolean).join(' · ')
   const isPreviewPage = run.id === 0
+  const authorHref = passage.source_origin
+    ? `/du/author/${encodeURIComponent(passage.source_origin)}`
+    : null
+  const articleHref = context?.segmentIds.length
+    ? `/du/article/${context.segmentIds[0]}`
+    : null
 
   const [isShareOpen, setIsShareOpen] = useState(false)
   const [shareBlob, setShareBlob] = useState<Blob | null>(null)
@@ -449,10 +455,18 @@ export default function DuDayClient({ run, date, context, author, article }: Pro
         <div className="du-mountain-layer" aria-hidden="true" />
         <div className="seal">读</div>
         <div className="hero-text du-hero-text">
-          {passage.volume
-            ? <Link href={`/du/library/${passage.volume}`} className="back-link">← 卷{VOLUME_CHINESE[passage.volume] ?? passage.volume}{passage.theme ? ` · ${passage.theme}` : ''}</Link>
-            : <Link href="/du" className="back-link">← 慢读</Link>
-          }
+          <div className="du-article-backlinks">
+            {passage.volume
+              ? <Link href={`/du/library/${passage.volume}`} className="back-link">← 卷{VOLUME_CHINESE[passage.volume] ?? passage.volume}{passage.theme ? ` · ${passage.theme}` : ''}</Link>
+              : <Link href="/du" className="back-link">← 慢读</Link>
+            }
+            {authorHref && (
+              <>
+                <span className="du-article-backlinks-sep">｜</span>
+                <Link href={authorHref} className="back-link">{passage.source_origin}</Link>
+              </>
+            )}
+          </div>
           <p className="subtitle">{date}</p>
           <h1 className="du-day-title">{source}</h1>
         </div>
@@ -560,6 +574,11 @@ export default function DuDayClient({ run, date, context, author, article }: Pro
         {/* 分段导航 */}
         {context && context.totalSegments > 1 && (
           <nav className="du-day-pager" aria-label="分段导航">
+            {articleHref && (
+              <Link href={articleHref} className="du-day-pager-link du-day-pager-article">
+                通读全文
+              </Link>
+            )}
             {context.segmentIds.map((segmentId, index) => {
               const segmentNumber = index + 1
               const isCurrent = segmentNumber === context.currentIndex

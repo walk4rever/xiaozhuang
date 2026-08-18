@@ -2,7 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(180deg, rgba(248, 244, 237, 0.7), rgba(248, 244, 237, 0.42));
+  background: linear-gradient(180deg, rgba(248, 244, 237, 0.97), rgba(248, 244, 237, 0.92));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 14px 26px -16px rgba(74, 66, 56, 0.16);
@@ -29,6 +29,7 @@
   font-size: 1.3rem;
   color: var(--ink-0);
   letter-spacing: 0.08rem;
+  white-space: nowrap;
 }
 
 .brandSeal {
@@ -67,11 +68,20 @@
 }
 
 @media (max-width: 480px) {
+  /* 窄屏三栏放不下，改成「品牌靠左 + 导航靠右」两栏，避免品牌名折行撑高导航条 */
   .inner {
+    grid-template-columns: auto 1fr;
+    column-gap: 0.75rem;
     padding: 0.6rem 0.9rem;
   }
 
+  .brand {
+    font-size: 1.1rem;
+  }
+
   .links {
+    grid-column: 2;
+    justify-self: end;
     gap: 0.9rem;
   }
 

@@ -1093,6 +1093,12 @@
   background: var(--paper-panel);
 }
 
+.du-day-pager-article {
+  padding-right: 0.65rem;
+  margin-right: 0.2rem;
+  border-right: 1px solid var(--line-soft);
+}
+
 .du-day-pager-link.is-current {
   color: var(--ink-0);
   font-weight: 600;
@@ -1172,9 +1178,28 @@
   transition: background 0.15s;
 }
 
-.du-article-reading .du-day-meta {
-  border-left: none;
-  border-radius: 10px;
+/* 作者简介 / 文章背景——独立成块，并列于两栏阅读区之上 */
+.du-article-intro {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem 2.25rem;
+  align-items: start;
+}
+
+.du-article-intro-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* 两块并列时，用一条细线分隔，而不是各自再套一层卡片 */
+@media (min-width: 660px) {
+  .du-article-intro-block + .du-article-intro-block {
+    margin-left: -1.125rem;
+    padding-left: 1.125rem;
+    border-left: 1px solid var(--line-soft);
+  }
 }
 
 .du-article-para.is-active .du-day-origin {
@@ -1292,6 +1317,8 @@
     right: 0.6rem;
     bottom: 0.6rem;
     max-height: 76vh;
+    /* 抽屉浮在正文之上，必须不透明，否则底下的原文会透出来叠字 */
+    background: var(--paper-0);
     box-shadow: 0 -16px 40px rgba(35, 28, 20, 0.22);
     transform: translateY(calc(100% + 1rem));
     opacity: 0;

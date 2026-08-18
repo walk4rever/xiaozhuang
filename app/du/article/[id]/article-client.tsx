@@ -75,7 +75,7 @@ export default function ArticleClient({
                 <Link href={`/du/library/${volume}`} className="back-link">
                   ← 卷{VOLUME_CHINESE[volume] ?? volume}{theme ? ` · ${theme}` : ''}
                 </Link>
-                <span className="du-article-backlinks-sep">·</span>
+                <span className="du-article-backlinks-sep">｜</span>
                 <Link href={authorHref} className="back-link">{sourceOrigin}</Link>
               </>
             ) : (
@@ -91,23 +91,27 @@ export default function ArticleClient({
         </div>
       </header>
 
+      {(author || article) && (
+        <section className="panel du-panel du-article-intro" aria-label="作者与篇章背景">
+          {author && (
+            <div className="du-article-intro-block">
+              <span className="du-day-meta-label">{sourceOrigin}</span>
+              <p className="du-day-meta-text">{author.description}</p>
+            </div>
+          )}
+
+          {article && (
+            <div className="du-article-intro-block">
+              <span className="du-day-meta-label">{baseTitle}</span>
+              <p className="du-day-meta-text">{article.background}</p>
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="panel du-panel du-article-panel">
         <div className="du-article-layout">
           <div className="du-article-reading">
-            {author && (
-              <div className="du-day-meta">
-                <span className="du-day-meta-label">{sourceOrigin}</span>
-                <p className="du-day-meta-text">{author.description}</p>
-              </div>
-            )}
-
-            {article && (
-              <div className="du-day-meta">
-                <span className="du-day-meta-label">{baseTitle}</span>
-                <p className="du-day-meta-text">{article.background}</p>
-              </div>
-            )}
-
             {segments.map((seg, i) => (
               <button
                 key={seg.id}
