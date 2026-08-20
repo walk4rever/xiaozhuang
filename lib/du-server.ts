@@ -755,9 +755,6 @@ const buildMailHtml = (
   <h3>关键词</h3>
   <ul>${keywordHtml}</ul>
 
-  <h3>析结构</h3>
-  <p>${payload.structure}</p>
-
   <h3>启示</h3>
   <p>${payload.insight}</p>
 

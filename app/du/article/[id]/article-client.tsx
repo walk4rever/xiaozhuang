@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { Author, Article, Passage } from '@/lib/du-server'
-import { renderSimpleMarkdown } from '@/lib/text-format'
 
 const VOLUME_CHINESE: Record<number, string> = {
   1: '一', 2: '二', 3: '三', 4: '四', 5: '五',
@@ -168,14 +167,6 @@ export default function ArticleClient({
                         </li>
                       ))}
                     </ul>
-                  </div>
-
-                  <div className="du-article-gloss-row">
-                    <span className="du-day-label">析结构</span>
-                    <p
-                      className="du-day-content"
-                      dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(activePayload.structure) }}
-                    />
                   </div>
 
                   <div className="du-article-gloss-row">

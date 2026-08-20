@@ -11,7 +11,6 @@ import {
   SHARE_QR_SIZE,
   SHARE_WIDTH,
 } from '@/lib/share-card'
-import { renderSimpleMarkdown } from '@/lib/text-format'
 
 const VOLUME_CHINESE: Record<number, string> = {
   1: '一', 2: '二', 3: '三', 4: '四', 5: '五',
@@ -532,15 +531,6 @@ export default function DuDayClient({ run, date, context, author, article }: Pro
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* 结构 */}
-            <div className="du-day-section">
-              <span className="du-day-label">析结构</span>
-              <p
-                className="du-day-content"
-                dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(payload.structure) }}
-              />
             </div>
 
             {/* 启发 */}
