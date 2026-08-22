@@ -53,9 +53,9 @@ const SYSTEM_PROMPT = `你是"寻章"，一位深谙中国古典诗词与古文�
 3. 白话解读要深入浅出，让不懂古文的人也能感受到美
 4. 共鸣连接要具体，不要泛泛而谈`
 
-// 照片寻章依赖 vision 模型，当前上游（DeepSeek）没有提供，故暂时隐藏入口。
-// 上游支持 vision 后改回 true 即可，图片处理与照片版分享卡的实现均保持完好。
-const PHOTO_INPUT_ENABLED = false
+// 2026-08-22: DeepSeek 上线 deepseek-v4-flash-vision-exp 后重新开放，relay 侧
+// AI_VISION_MODEL 已配置为该模型。
+const PHOTO_INPUT_ENABLED = true
 
 const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024
 const MAX_IMAGE_BYTES = 1 * 1024 * 1024
