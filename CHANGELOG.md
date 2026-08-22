@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.17.6 - 2026-08-22
+- 寻章（`/xun`）重新开放照片上传入口：DeepSeek 上线 `deepseek-v4-flash-vision-exp`，air7 relay 的 `AI_VISION_MODEL` 已配置，`PHOTO_INPUT_ENABLED` 改回 `true`
+
 ## v0.17.5 - 2026-08-20
 - 慢读段落解读移除「析结构」展示（网页 `/du/[date]`、`/du/article/[id]` 及订阅邮件模板），保留数据库字段与生成脚本不变
 - 修复 9 篇文章的作者页「未分类」死链接（`xz_du_articles.base_title` 历史遗留的书名前缀与实际段落标题不一致导致孤儿数据）
