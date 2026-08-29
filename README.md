@@ -87,6 +87,8 @@ APP_BASE_URL=https://your-domain.com
 | `CRON_SECRET` | 保护定时任务入口 |
 | `APP_BASE_URL` | 确认邮件链接的域名（生产环境） |
 
+> 本地跑 `npm run dev` 时，浏览器直连生产 relay 会被 CORS 拦截（relay 的 `ALLOWED_ORIGINS` 只放行生产域名），出现 `Failed to fetch`。`next.config.ts` 已内置一个仅在 `NODE_ENV !== 'production'` 时生效的 `rewrites()`，把 `/__dev-llm-proxy` 同源转发到 relay；本地开发把 `NEXT_PUBLIC_LLM_URL` 指到 `http://localhost:3000/__dev-llm-proxy` 即可绕开 CORS，生产环境不受影响，仍需直接配置 relay 地址。
+
 ```bash
 npm run lint
 npm run build

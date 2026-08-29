@@ -16,6 +16,19 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async rewrites() {
+    // Dev-only: the deployed relay's CORS allowlist only permits the
+    // production origin, so a browser on localhost gets "Failed to fetch".
+    // Proxy same-origin in dev so the browser never needs relay CORS.
+    // No-op in production — the app still calls the relay directly there.
+    if (process.env.NODE_ENV === 'production') return []
+    return [
+      {
+        source: '/__dev-llm-proxy',
+        destination: 'https://relay.air7.fun/llm',
+      },
+    ]
+  },
 }
 
 export default nextConfig

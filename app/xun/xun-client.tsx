@@ -228,23 +228,33 @@ const renderShareCard = async (
     usePhotoTemplate ? 5 : 8
   )
 
-  const blockH =
-    quoteLines.length * quoteLineH +
-    32 + sourceFontSize + 56 +   // source row
-    48 +                          // divider gap
-    interpretLines.length * interpretLineH
+  const quoteBlockH = quoteLines.length * quoteLineH
+  const sourceRowH = 32 + sourceFontSize + 56   // gap-before + text + gap-after
+  const dividerBlockH = 48                       // gap after divider, before interpretation
+  const interpretBlockH = interpretLines.length * interpretLineH
+  const blockH = quoteBlockH + sourceRowH + dividerBlockH + interpretBlockH
 
   const footerArea = 64 + SHARE_QR_SIZE + margin  // gap + QR + bottom margin
+
+  // Photo template layout: quote → source → whitespace → photo → divider/interpretation
+  const photoTopMargin = 88      // whitespace above the quote
+  const photoGapAfterPhoto = 48  // gap between photo and divider
 
   // ── Compute canvas height ─────────────────────────────────
   let h: number
   let contentStartY: number
+  let photoH = 0
+  let photoY = 0
 
   if (usePhotoTemplate && image) {
     const naturalH = Math.round(image.height * (w / image.width))
-    const photoH = Math.min(naturalH, 800)
-    contentStartY = photoH + 64
-    h = Math.max(SHARE_CARD_HEIGHT, contentStartY + blockH + footerArea)
+    photoH = Math.min(naturalH, 800)
+    contentStartY = photoTopMargin
+    photoY = photoTopMargin + quoteBlockH + sourceRowH
+    h = Math.max(
+      SHARE_CARD_HEIGHT,
+      photoY + photoH + photoGapAfterPhoto + dividerBlockH + interpretBlockH + footerArea
+    )
   } else {
     // Center content in the space above the footer area
     h = Math.max(SHARE_CARD_HEIGHT, 280 + blockH + footerArea)
@@ -259,34 +269,18 @@ const renderShareCard = async (
     bg.addColorStop(1, '#ece3d4')
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, canvasHeight)
+
+    if (!usePhotoTemplate) {
+      const glow = ctx.createRadialGradient(w * 0.2, canvasHeight * 0.28, 20, w * 0.2, canvasHeight * 0.28, 520)
+      glow.addColorStop(0, 'rgba(255,255,255,0.4)')
+      glow.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = glow
+      ctx.fillRect(0, 0, w, canvasHeight)
+    }
   }
 
   ctx.textBaseline = 'top'
   let y = contentStartY
-
-  if (usePhotoTemplate && image) {
-    if (shouldDraw) {
-      const photo = await loadImage(image.dataUrl)
-      const naturalH = Math.round(photo.height * (w / photo.width))
-      const photoH = Math.min(naturalH, 800)
-      const scale = Math.min(w / photo.width, photoH / photo.height)
-      const drawW = Math.round(photo.width * scale)
-      const drawH = Math.round(photo.height * scale)
-      ctx.drawImage(photo, Math.round((w - drawW) / 2), Math.round((photoH - drawH) / 2), drawW, drawH)
-
-      const fade = ctx.createLinearGradient(0, photoH - 120, 0, photoH)
-      fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
-      fade.addColorStop(1, 'rgba(242, 235, 224, 0.6)')
-      ctx.fillStyle = fade
-      ctx.fillRect(0, 0, w, photoH)
-    }
-  } else if (shouldDraw) {
-    const glow = ctx.createRadialGradient(w * 0.2, canvasHeight * 0.28, 20, w * 0.2, canvasHeight * 0.28, 520)
-    glow.addColorStop(0, 'rgba(255,255,255,0.4)')
-    glow.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = glow
-    ctx.fillRect(0, 0, w, canvasHeight)
-  }
 
   // Quote
   ctx.fillStyle = '#1c1714'
@@ -295,13 +289,38 @@ const renderShareCard = async (
     if (shouldDraw) ctx.fillText(line, margin, y)
     y += quoteLineH
   }
-  y += 32
 
   // Source
+  y += 32
   ctx.fillStyle = '#96836e'
   ctx.font = `400 ${sourceFontSize}px "Noto Serif SC", serif`
   if (shouldDraw) ctx.fillText(`—— ${result.source}`, margin, y)
   y += sourceFontSize + 56
+
+  // Photo (between source and divider, for the photo template)
+  if (usePhotoTemplate && image) {
+    if (shouldDraw) {
+      const photo = await loadImage(image.dataUrl)
+      const scale = Math.min(w / photo.width, photoH / photo.height)
+      const drawW = Math.round(photo.width * scale)
+      const drawH = Math.round(photo.height * scale)
+      ctx.drawImage(
+        photo,
+        Math.round((w - drawW) / 2),
+        photoY + Math.round((photoH - drawH) / 2),
+        drawW,
+        drawH
+      )
+
+      const fade = ctx.createLinearGradient(0, photoY + photoH - 100, 0, photoY + photoH)
+      fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
+      fade.addColorStop(1, 'rgba(242, 235, 224, 0.65)')
+      ctx.fillStyle = fade
+      ctx.fillRect(0, photoY, w, photoH)
+    }
+
+    y += photoH + photoGapAfterPhoto
+  }
 
   // Divider
   if (shouldDraw) {
