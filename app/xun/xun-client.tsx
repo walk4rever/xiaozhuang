@@ -218,7 +218,7 @@ const renderShareCard = async (
   const interpretLineH = interpretFontSize + 18
 
   ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
-  const quoteLines = wrapText(ctx, result.quote, w - margin * 2, usePhotoTemplate ? 4 : 5)
+  const quoteLines = wrapText(ctx, `「${result.quote}」`, w - margin * 2, usePhotoTemplate ? 4 : 5)
 
   ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
   const interpretLines = wrapText(
@@ -666,7 +666,7 @@ export default function XunClient() {
             <span className="xun-result-tag">{image ? '看图寻章' : '文字寻章'}</span>
           </div>
           <div className="xun-quote-block">
-            <p className="quote-text">{parsed.quote}</p>
+            <p className="quote-text">「{parsed.quote}」</p>
             <p className="quote-source">—— {parsed.source}</p>
           </div>
           <div className="section">
