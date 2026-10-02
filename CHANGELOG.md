@@ -1,7 +1,7 @@
 # Changelog
 
 ## v0.17.6 - 2026-08-22
-- 寻章（`/xun`）重新开放照片上传入口：DeepSeek 上线 `deepseek-v4-flash-vision-exp`，air7 relay 的 `AI_VISION_MODEL` 已配置，`PHOTO_INPUT_ENABLED` 改回 `true`
+- 寻章（`/xun`）重新开放照片上传入口：DeepSeek 上线视觉模型支持，air7 relay 的 `AI_VISION_MODEL` 已配置，`PHOTO_INPUT_ENABLED` 改回 `true`
 
 ## v0.17.5 - 2026-08-20
 - 慢读段落解读移除「析结构」展示（网页 `/du/[date]`、`/du/article/[id]` 及订阅邮件模板），保留数据库字段与生成脚本不变
