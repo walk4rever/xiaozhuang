@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.18.0 - 2026-10-06
+- 小庄主域名迁移至 `https://xz.air7fun.com`，分享卡片、二维码和慢读 Open Graph 统一使用新域名
+- relay CORS 同时放行新旧站点域名，旧域名继续跳转至新域名
+
 ## v0.17.6 - 2026-08-22
 - 寻章（`/xun`）重新开放照片上传入口：DeepSeek 上线视觉模型支持，air7 relay 的 `AI_VISION_MODEL` 已配置，`PHOTO_INPUT_ENABLED` 改回 `true`
 
