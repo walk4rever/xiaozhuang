@@ -48,7 +48,9 @@ const API_KEY = process.env.AI_API_KEY
 const API_BASE_URL = process.env.AI_API_BASE_URL?.replace(/\/+$/, '') || ''
 const PRIMARY_MODEL = process.env.AI_PRIMARY_MODEL || ''
 const VISION_MODEL = process.env.AI_VISION_MODEL || PRIMARY_MODEL
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://xz.air7.fun')
+const ALLOWED_ORIGINS = (
+  process.env.ALLOWED_ORIGINS || 'https://xz.air7fun.com,https://xz.air7.fun'
+)
   .split(',')
   .map((s) => s.trim())
 

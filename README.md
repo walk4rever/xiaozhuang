@@ -4,7 +4,7 @@
 
 小庄是一个面向现代表达与情绪场景的中文 AI 产品，以中国古典诗词、古文与周易为底，帮你找到一句最贴切的话，或写出心里想说的。
 
-**在线体验**：[https://xz.air7.fun](https://xz.air7.fun)
+**在线体验**：[https://xz.air7fun.com](https://xz.air7fun.com)
 
 ---
 

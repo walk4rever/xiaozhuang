@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getRunByDate, getPassageContext, getAuthor, getArticle, parseSegment } from '@/lib/du-server'
+import { SITE_URL } from '@/lib/site'
 import DuDayClient from './du-day-client'
 
 interface Props {
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `今日慢读｜${source}`,
       description: summary,
-      url: `https://xz.air7.fun/du/${date}`,
+      url: `${SITE_URL}/du/${date}`,
       siteName: '小庄',
       locale: 'zh_CN',
       type: 'article',

@@ -2,14 +2,16 @@
 // Canvas API is only called inside async functions, so this file is safe to
 // import from 'use client' components — it is never executed on the server.
 
+import { SITE_URL } from '@/lib/site'
+
 export const SHARE_WIDTH = 1080
 export const SHARE_MARGIN = 84
 export const SHARE_QR_SIZE = 100
 export const SHARE_QR_OPACITY = 0.45
 export const SHARE_FONT_FAMILY = '"Noto Serif SC", serif'
-export const SHARE_SITE_URL = 'https://xz.air7.fun'
+export const SHARE_SITE_URL = SITE_URL
 
-const SHARE_QR_PATH = '/qr-xz-air7-fun.svg'
+const SHARE_QR_PATH = '/qr-xz-air7fun-com.svg'
 
 const loadQrImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
