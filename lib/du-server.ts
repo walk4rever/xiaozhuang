@@ -252,13 +252,15 @@ export const sendConfirmEmail = async (email: string, token: string): Promise<vo
 // Passage selection  —  从未发送过的里随机选，库存耗尽则报错
 // ---------------------------------------------------------------------------
 export const pickTodayPassage = async (): Promise<Passage> => {
-  const unsent = await supabaseFetch<Passage[]>(
-    'xz_du_passages?select=id,source_book,source_origin,title,content,difficulty,theme,payload' +
-      '&enabled=eq.true&last_sent_at=is.null&payload=not.is.null&limit=500'
+  const unsent = await supabaseFetch<{ id: number }[]>(
+    'xz_du_passages?select=id&enabled=eq.true&last_sent_at=is.null&payload=not.is.null&limit=500'
   )
 
   if (!unsent.length) throw new Error('All passages have been sent. Please seed more content.')
-  return unsent[Math.floor(Math.random() * unsent.length)]
+  const picked = unsent[Math.floor(Math.random() * unsent.length)]
+  const passage = await getPassageById(picked.id)
+  if (!passage) throw new Error(`Passage ${picked.id} not found`)
+  return passage
 }
 
 export const getPassageById = async (id: number): Promise<Passage | null> => {
