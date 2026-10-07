@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.18.1 - 2026-10-07
+- 慢读选篇性能优化：`pickTodayPassage` 查询改为先抽取 ID 列表后单篇获取，避免一次性序列化 500 篇正文及 AI payload 造成 Vercel 函数 60s 超时 (504)
+- 适配主域名迁移后的邮件发信配置与 mini 机器 cron 监控链接
+
 ## v0.18.0 - 2026-10-06
 - 小庄主域名迁移至 `https://xz.air7fun.com`，分享卡片、二维码和慢读 Open Graph 统一使用新域名
 - relay CORS 同时放行新旧站点域名，旧域名继续跳转至新域名
