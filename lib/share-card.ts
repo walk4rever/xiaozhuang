@@ -36,7 +36,7 @@ export const drawShareFooter = async (
   const margin = SHARE_MARGIN
   const qrSize = SHARE_QR_SIZE
 
-  ctx.fillStyle = '#96836e'
+  ctx.fillStyle = '#71717a'
   ctx.font = `400 26px ${SHARE_FONT_FAMILY}`
   ctx.textBaseline = 'middle'
   ctx.fillText(`小庄·${moduleLabel}  ${SHARE_SITE_URL}`, margin, footerTopY + qrSize / 2)

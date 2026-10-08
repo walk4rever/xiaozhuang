@@ -112,7 +112,7 @@ const renderDuShareCard = async (
   const dateLabelSize = 26
   const sourceSize = 40
   const sectionLabelSize = 26
-  const sectionLabelColor = '#96836e'
+  const sectionLabelColor = '#71717a'
   const contextSize = 28
   const contextLineH = contextSize + 22
   const bioSize = 28
@@ -209,15 +209,9 @@ const renderDuShareCard = async (
 
   if (shouldDraw) {
     const bg = ctx.createLinearGradient(0, 0, 0, h)
-    bg.addColorStop(0, '#f9f4ec')
-    bg.addColorStop(1, '#f0e8db')
+    bg.addColorStop(0, '#ffffff')
+    bg.addColorStop(1, '#f4f4f5')
     ctx.fillStyle = bg
-    ctx.fillRect(0, 0, w, h)
-
-    const glow = ctx.createRadialGradient(w * 0.15, h * 0.18, 10, w * 0.15, h * 0.18, 480)
-    glow.addColorStop(0, 'rgba(255,255,255,0.32)')
-    glow.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = glow
     ctx.fillRect(0, 0, w, h)
   }
 
@@ -225,19 +219,19 @@ const renderDuShareCard = async (
   let y = paddingTop
 
   // ── 日期 + 来源 ───────────────────────────────────────
-  ctx.fillStyle = '#96836e'
+  ctx.fillStyle = '#71717a'
   ctx.font = `400 ${dateLabelSize}px "Noto Serif SC", serif`
   if (shouldDraw) ctx.fillText(date, margin, y)
   y += dateLabelSize + 12
 
-  ctx.fillStyle = '#2a2520'
+  ctx.fillStyle = '#18181b'
   ctx.font = `500 ${sourceSize}px "Noto Serif SC", serif`
   if (shouldDraw) ctx.fillText(source, margin, y)
   y += sourceSize + sectionGap
 
   // ── 节选信息 ─────────────────────────────────────────
   if (contextLines.length) {
-    ctx.fillStyle = '#6d6154'
+    ctx.fillStyle = '#52525b'
     ctx.font = `400 ${contextSize}px "Noto Serif SC", serif`
     for (const line of contextLines) {
       if (shouldDraw) ctx.fillText(line, margin, y)
@@ -253,7 +247,7 @@ const renderDuShareCard = async (
     if (shouldDraw) ctx.fillText(passage.source_origin ?? '作者', margin, y)
     y += sectionLabelSize + labelGap
 
-    ctx.fillStyle = '#3a3028'
+    ctx.fillStyle = '#3f3f46'
     ctx.font = `400 ${bioSize}px "Noto Serif SC", serif`
     for (const line of authorLines) {
       if (shouldDraw) ctx.fillText(line, margin, y)
@@ -269,7 +263,7 @@ const renderDuShareCard = async (
     if (shouldDraw) ctx.fillText(article?.base_title ?? '背景', margin, y)
     y += sectionLabelSize + labelGap
 
-    ctx.fillStyle = '#3a3028'
+    ctx.fillStyle = '#3f3f46'
     ctx.font = `400 ${bioSize}px "Noto Serif SC", serif`
     for (const line of articleLines) {
       if (shouldDraw) ctx.fillText(line, margin, y)
@@ -287,11 +281,11 @@ const renderDuShareCard = async (
   // Left accent bar
   const contentBlockHeight = measureParagraphBlock(contentParagraphs, contentLineH)
   if (shouldDraw) {
-    ctx.fillStyle = 'rgba(139,100,74,0.22)'
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
     ctx.fillRect(margin, y, 4, contentBlockHeight)
   }
 
-  ctx.fillStyle = '#1c1714'
+  ctx.fillStyle = '#09090b'
   ctx.font = `400 ${contentSize}px "Noto Serif SC", serif`
   for (let index = 0; index < contentParagraphs.length; index += 1) {
     for (const line of contentParagraphs[index]) {
@@ -308,7 +302,7 @@ const renderDuShareCard = async (
   if (shouldDraw) ctx.fillText('一句话', margin, y)
   y += sectionLabelSize + labelGap
 
-  ctx.fillStyle = '#2f2924'
+  ctx.fillStyle = '#18181b'
   ctx.font = `500 ${summarySize}px "Noto Serif SC", serif`
   for (const line of summaryLines) {
     if (shouldDraw) ctx.fillText(line, margin, y)
@@ -322,7 +316,7 @@ const renderDuShareCard = async (
   if (shouldDraw) ctx.fillText('慢慢读', margin, y)
   y += sectionLabelSize + labelGap
 
-  ctx.fillStyle = '#3a3028'
+  ctx.fillStyle = '#3f3f46'
   ctx.font = `400 ${translationSize}px "Noto Serif SC", serif`
   for (let index = 0; index < translationParagraphs.length; index += 1) {
     for (const line of translationParagraphs[index]) {
@@ -339,7 +333,7 @@ const renderDuShareCard = async (
   if (shouldDraw) ctx.fillText('启示', margin, y)
   y += sectionLabelSize + labelGap
 
-  ctx.fillStyle = '#3a3028'
+  ctx.fillStyle = '#3f3f46'
   ctx.font = `400 ${insightSize}px "Noto Serif SC", serif`
   for (let index = 0; index < insightParagraphs.length; index += 1) {
     for (const line of insightParagraphs[index]) {

@@ -35,57 +35,57 @@
 
 /* 星点用百分比定位，而避碰算法按 1000×300 的虚拟画布计算，
    所以画布必须保持足够宽度，窄屏改为横向滚动而不是压缩。 */
-.sky {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background:
-    radial-gradient(ellipse at 15% 40%, rgba(180, 160, 200, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 25%, rgba(140, 180, 200, 0.06) 0%, transparent 50%),
-    linear-gradient(180deg, #f9f5ee 0%, #f4ede0 100%);
-}
-
-.dynastyLabel {
-  position: absolute;
-  bottom: 10px;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.dynastyLabel:first-of-type {
-  transform: translateX(-20%);
-}
-
-.dynastyLabel:last-of-type {
-  transform: translateX(-80%);
-}
-
-.dynastyName {
-  font-size: 0.72rem;
-  color: var(--ink-2);
-  letter-spacing: 0.06rem;
-  line-height: 1;
-}
-
-.dynastyLine {
-  position: absolute;
-  top: 0;
-  bottom: 30px;
-  width: 1px;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(122, 104, 86, 0.12) 30%,
-    rgba(122, 104, 86, 0.12) 80%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
+  .sky {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background:
+      radial-gradient(ellipse at 15% 40%, rgba(180, 160, 200, 0.05) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 25%, rgba(140, 180, 200, 0.05) 0%, transparent 50%),
+      linear-gradient(180deg, #fafafa 0%, #f4f4f5 100%);
+  }
+  
+  .dynastyLabel {
+    position: absolute;
+    bottom: 10px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  
+  .dynastyLabel:first-of-type {
+    transform: translateX(-20%);
+  }
+  
+  .dynastyLabel:last-of-type {
+    transform: translateX(-80%);
+  }
+  
+  .dynastyName {
+    font-size: 0.72rem;
+    color: var(--ink-2);
+    letter-spacing: 0.06rem;
+    line-height: 1;
+  }
+  
+  .dynastyLine {
+    position: absolute;
+    top: 0;
+    bottom: 30px;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.08) 30%,
+      rgba(0, 0, 0, 0.08) 80%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
 
 .star {
   position: absolute;

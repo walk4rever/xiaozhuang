@@ -567,9 +567,9 @@ const renderGuaShareCard = async (
 
   if (shouldDraw) {
     const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
-    bg.addColorStop(0, '#f8f4ec')
-    bg.addColorStop(0.55, '#efe8dc')
-    bg.addColorStop(1, '#e9dfd1')
+    bg.addColorStop(0, '#ffffff')
+    bg.addColorStop(0.55, '#fbfbfb')
+    bg.addColorStop(1, '#f4f4f5')
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, canvasHeight)
   }
@@ -582,12 +582,12 @@ const renderGuaShareCard = async (
   const hasChangedHexagram =
     Boolean(changedName) && result.lines.some((line) => line.changing) && result.changedNumber !== result.number
 
-  ctx.fillStyle = '#1f1a16'
+  ctx.fillStyle = '#09090b'
   ctx.font = '700 54px "Noto Serif SC", serif'
   if (shouldDraw) ctx.fillText(baseName, padding, y)
   y += 76
 
-  ctx.fillStyle = '#6b5f54'
+  ctx.fillStyle = '#71717a'
   ctx.font = '400 28px "Noto Serif SC", serif'
   ctx.textAlign = 'left'
   if (shouldDraw) ctx.fillText(`本卦：${baseName}`, padding, y)
@@ -599,13 +599,13 @@ const renderGuaShareCard = async (
   y += 58
 
   const drawSectionTitle = (title: string) => {
-    ctx.fillStyle = '#2f2722'
+    ctx.fillStyle = '#18181b'
     ctx.font = '700 34px "Noto Serif SC", serif'
     if (shouldDraw) ctx.fillText(title, padding, y)
     y += 52
   }
 
-  const drawParagraph = (text: string, size = 28, color = '#4d433a', gapAfter = 22) => {
+  const drawParagraph = (text: string, size = 28, color = '#3f3f46', gapAfter = 22) => {
     ctx.fillStyle = color
     ctx.font = `400 ${size}px "Noto Serif SC", serif`
     const lineHeight = Math.round(size * 1.62)
@@ -620,7 +620,7 @@ const renderGuaShareCard = async (
   const drawHexagramPanel = (lines: Line[]) => {
     const panelHeight = 250
     if (shouldDraw) {
-      ctx.fillStyle = 'rgba(139, 74, 60, 0.1)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
       drawRoundedRect(ctx, padding, y, contentW, panelHeight, 26)
       ctx.fill()
       drawHexagramOnCanvas(ctx, lines, padding + 44, y + 30, contentW - 88, panelHeight - 60)
@@ -637,14 +637,14 @@ const renderGuaShareCard = async (
     drawSectionTitle(sectionTitle)
     drawHexagramPanel(lines)
 
-    drawParagraph(entry?.guaCi ?? '暂无卦辞', 29, '#4d433a', 18)
-    drawParagraph('爻辞', 30, '#352d27', 10)
+    drawParagraph(entry?.guaCi ?? '暂无卦辞', 29, '#3f3f46', 18)
+    drawParagraph('爻辞', 30, '#18181b', 10)
 
     entry?.yaoCi.forEach((text, index) => {
       const line = lines[index]
       const isChanging = highlightChanging && (line?.changing ?? false)
       const suffix = isChanging ? '（动爻）' : ''
-      drawParagraph(`${text}${suffix}`, 27, isChanging ? '#7e3f34' : '#4d433a', 10)
+      drawParagraph(`${text}${suffix}`, 27, isChanging ? '#09090b' : '#52525b', 10)
     })
     y += 12
   }
@@ -658,16 +658,16 @@ const renderGuaShareCard = async (
   drawSectionTitle('卦象解读')
   if (interpretation.items.length) {
     interpretation.items.forEach((item) => {
-      drawParagraph(`【${item.title}】`, 28, '#352d27', 8)
-      drawParagraph(item.content, 27, '#4d433a', 16)
+      drawParagraph(`【${item.title}】`, 28, '#18181b', 8)
+      drawParagraph(item.content, 27, '#3f3f46', 16)
     })
   } else {
-    drawParagraph(interpretation.plain || result.interpretation || '暂无解读', 27, '#4d433a', 14)
+    drawParagraph(interpretation.plain || result.interpretation || '暂无解读', 27, '#3f3f46', 14)
   }
 
   const footerY = y + 24
   if (shouldDraw) {
-    ctx.strokeStyle = 'rgba(139, 74, 60, 0.2)'
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)'
     ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.moveTo(padding, footerY)
@@ -1037,18 +1037,18 @@ export default function GuaClient() {
           <div className="casting-content">
             <svg className="yin-yang-spinner" viewBox="0 0 120 120" aria-hidden="true">
               {/* 阴（暗）底圆 */}
-              <circle cx="60" cy="60" r="50" fill="#15110f" />
+              <circle cx="60" cy="60" r="50" fill="#09090b" />
               {/* 阳（亮）路径：顶→右大弧到底→逆时针下小圆左侧到圆心→顺时针上小圆右侧回顶 */}
               <path
                 d="M 60 10 A 50 50 0 0 1 60 110 A 25 25 0 0 0 60 60 A 25 25 0 0 1 60 10 Z"
-                fill="#f7f0e1"
+                fill="#ffffff"
               />
               {/* 外圆边框 */}
-              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(246,226,178,0.2)" strokeWidth="1" />
+              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
               {/* 阳鱼内的阴眼（上小圆圆心） */}
-              <circle cx="60" cy="35" r="10" fill="#15110f" />
+              <circle cx="60" cy="35" r="10" fill="#09090b" />
               {/* 阴鱼内的阳眼（下小圆圆心） */}
-              <circle cx="60" cy="85" r="10" fill="#f7f0e1" />
+              <circle cx="60" cy="85" r="10" fill="#ffffff" />
             </svg>
             <div>
               <h2>卦象生成中</h2>

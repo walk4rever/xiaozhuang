@@ -136,7 +136,7 @@ const optimizeImage = async (file: File): Promise<ImageAsset> => {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('图片处理失败，请重试。')
 
-  ctx.fillStyle = '#f7f3ec'
+  ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, 0, width, height)
   ctx.drawImage(img, 0, 0, width, height)
 
@@ -264,26 +264,18 @@ const renderShareCard = async (
 
   if (shouldDraw) {
     const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
-    bg.addColorStop(0, '#f9f4ec')
-    bg.addColorStop(0.6, '#f2ebe0')
-    bg.addColorStop(1, '#ece3d4')
+    bg.addColorStop(0, '#ffffff')
+    bg.addColorStop(0.6, '#fbfbfb')
+    bg.addColorStop(1, '#f4f4f5')
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, canvasHeight)
-
-    if (!usePhotoTemplate) {
-      const glow = ctx.createRadialGradient(w * 0.2, canvasHeight * 0.28, 20, w * 0.2, canvasHeight * 0.28, 520)
-      glow.addColorStop(0, 'rgba(255,255,255,0.4)')
-      glow.addColorStop(1, 'rgba(255,255,255,0)')
-      ctx.fillStyle = glow
-      ctx.fillRect(0, 0, w, canvasHeight)
-    }
   }
 
   ctx.textBaseline = 'top'
   let y = contentStartY
 
   // Quote
-  ctx.fillStyle = '#1c1714'
+  ctx.fillStyle = '#09090b'
   ctx.font = `700 ${quoteFontSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
     if (shouldDraw) ctx.fillText(line, margin, y)
@@ -292,7 +284,7 @@ const renderShareCard = async (
 
   // Source
   y += 32
-  ctx.fillStyle = '#96836e'
+  ctx.fillStyle = '#71717a'
   ctx.font = `400 ${sourceFontSize}px "Noto Serif SC", serif`
   if (shouldDraw) ctx.fillText(`—— ${result.source}`, margin, y)
   y += sourceFontSize + 56
@@ -313,8 +305,8 @@ const renderShareCard = async (
       )
 
       const fade = ctx.createLinearGradient(0, photoY + photoH - 100, 0, photoY + photoH)
-      fade.addColorStop(0, 'rgba(242, 235, 224, 0)')
-      fade.addColorStop(1, 'rgba(242, 235, 224, 0.65)')
+      fade.addColorStop(0, 'rgba(255, 255, 255, 0)')
+      fade.addColorStop(1, 'rgba(255, 255, 255, 0.85)')
       ctx.fillStyle = fade
       ctx.fillRect(0, photoY, w, photoH)
     }
@@ -324,7 +316,7 @@ const renderShareCard = async (
 
   // Divider
   if (shouldDraw) {
-    ctx.strokeStyle = 'rgba(148, 122, 88, 0.28)'
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)'
     ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.moveTo(margin, y)
@@ -334,7 +326,7 @@ const renderShareCard = async (
   y += 48
 
   // Interpretation
-  ctx.fillStyle = '#5c5044'
+  ctx.fillStyle = '#3f3f46'
   ctx.font = `400 ${interpretFontSize}px "Noto Serif SC", serif`
   for (const line of interpretLines) {
     if (shouldDraw) ctx.fillText(line, margin, y)

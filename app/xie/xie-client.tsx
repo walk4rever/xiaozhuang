@@ -146,11 +146,11 @@ const drawKnowledgeEntry = (
   if (current) lines.push(current)
 
   // Name (bold) + first bio line on same row
-  ctx.fillStyle = '#3a3028'
+  ctx.fillStyle = '#18181b'
   ctx.font = `700 ${fontSize}px "Noto Serif SC", serif`
   ctx.fillText(nameWithSpace, x, y)
 
-  ctx.fillStyle = '#5c5044'
+  ctx.fillStyle = '#52525b'
   ctx.font = `400 ${fontSize}px "Noto Serif SC", serif`
   if (lines.length > 0) ctx.fillText(lines[0], x + nameW, y)
 
@@ -179,7 +179,7 @@ const renderXieShareCard = async (
 
   // Type scale — larger for comfortable mobile reading
   const labelSize = 28
-  const labelColor = '#96836e'
+  const labelColor = '#71717a'
   const labelGap = 20
   const sectionGap = 72
   const headerSize = 38
@@ -205,16 +205,10 @@ const renderXieShareCard = async (
 
   if (shouldDraw) {
     const bg = ctx.createLinearGradient(0, 0, 0, canvasHeight)
-    bg.addColorStop(0, '#f9f4ec')
-    bg.addColorStop(0.6, '#f2ebe0')
-    bg.addColorStop(1, '#ece3d4')
+    bg.addColorStop(0, '#ffffff')
+    bg.addColorStop(0.6, '#fbfbfb')
+    bg.addColorStop(1, '#f4f4f5')
     ctx.fillStyle = bg
-    ctx.fillRect(0, 0, w, canvasHeight)
-
-    const glow = ctx.createRadialGradient(w * 0.18, canvasHeight * 0.22, 20, w * 0.18, canvasHeight * 0.22, 500)
-    glow.addColorStop(0, 'rgba(255,255,255,0.36)')
-    glow.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = glow
     ctx.fillRect(0, 0, w, canvasHeight)
   }
 
@@ -228,7 +222,7 @@ const renderXieShareCard = async (
   if (shouldDraw) ctx.fillText('文体 · 人物', margin, y)
   y += labelSize + labelGap
 
-  ctx.fillStyle = '#2a2520'
+  ctx.fillStyle = '#18181b'
   ctx.font = `400 ${headerSize}px "Noto Serif SC", serif`
   if (shouldDraw) ctx.fillText(`${styleUsed} · ${authorUsed}`, margin, y)
   y += headerSize + sectionGap
@@ -239,7 +233,7 @@ const renderXieShareCard = async (
   if (shouldDraw) ctx.fillText('章句', margin, y)
   y += labelSize + labelGap
 
-  ctx.fillStyle = '#1c1714'
+  ctx.fillStyle = '#09090b'
   ctx.font = `400 ${quoteSize}px "Noto Serif SC", serif`
   for (const line of quoteLines) {
     if (shouldDraw) ctx.fillText(line, margin, y)

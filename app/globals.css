@@ -2,37 +2,37 @@
   font-family: 'Noto Serif SC', 'Songti SC', STSong, serif;
   line-height: 1.8;
   font-weight: 400;
-  color: #241f1b;
-  background-color: #f5f0e8;
+  color: #09090b;
+  background-color: #fbfbfb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --paper-0: #f7f3ec;
-  --paper-1: #ede7de;
-  --paper-2: #ded7cc;
+  --paper-0: #fbfbfb;
+  --paper-1: #f4f4f5;
+  --paper-2: #e4e4e7;
 
-  --ink-0: #241f1b;
-  --ink-1: #4f4842;
-  --ink-2: #746d64;
+  --ink-0: #09090b;
+  --ink-1: #3f3f46;
+  --ink-2: #71717a;
   /* 仅用于禁用态与纯装饰分隔符：对比度低于 AA，不要用于正文信息 */
-  --ink-3: #9a9284;
+  --ink-3: #a1a1aa;
 
-  --shanshui-primary: #58746e;
-  --shanshui-secondary: #748a83;
-  --shanshui-moss: #6e7f5e;
-  --shanshui-warm: #a58a6a;
-  --shanshui-seal: #8b4a3c;
+  --shanshui-primary: #18181b;
+  --shanshui-secondary: #52525b;
+  --shanshui-moss: #3f3f46;
+  --shanshui-warm: #71717a;
+  --shanshui-seal: #09090b;
 
-  --line-soft: rgba(122, 104, 86, 0.18);
-  --line-faint: rgba(122, 104, 86, 0.1);
-  --shadow-soft: 0 16px 34px rgba(74, 66, 56, 0.08);
-  --shadow-hero: 0 20px 48px rgba(74, 66, 56, 0.1);
+  --line-soft: rgba(0, 0, 0, 0.08);
+  --line-faint: rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
+  --shadow-hero: 0 16px 40px rgba(0, 0, 0, 0.06);
 
-  --paper-panel: linear-gradient(180deg, rgba(252, 249, 244, 0.97), rgba(244, 238, 229, 0.95));
-  --paper-panel-soft: linear-gradient(180deg, rgba(247, 242, 234, 0.88), rgba(239, 233, 223, 0.82));
-  --paper-hero: linear-gradient(180deg, rgba(248, 244, 237, 0.98), rgba(238, 232, 222, 0.96));
+  --paper-panel: #ffffff;
+  --paper-panel-soft: rgba(255, 255, 255, 0.92);
+  --paper-hero: #ffffff;
 }
 
 * {
@@ -44,11 +44,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   color: var(--ink-0);
-  background:
-    radial-gradient(circle at 14% 10%, rgba(255, 255, 255, 0.72), transparent 22%),
-    radial-gradient(circle at 82% 16%, rgba(126, 148, 140, 0.08), transparent 20%),
-    radial-gradient(circle at 50% 70%, rgba(222, 215, 204, 0.28), transparent 30%),
-    linear-gradient(180deg, var(--paper-0), var(--paper-1));
+  background-color: #f8f9fa;
 }
 
 button,
@@ -79,6 +75,7 @@ a {
   gap: clamp(1.5rem, 3vw, 3.5rem);
   padding: clamp(1.5rem, 3vw, 2.5rem);
   border-radius: 28px;
+  background: var(--paper-hero);
   box-shadow: var(--shadow-hero);
   border: 1px solid var(--line-soft);
 }
@@ -92,18 +89,18 @@ a {
 
 .back-link {
   font-size: 0.9rem;
-  color: rgba(79, 72, 66, 0.72);
+  color: var(--ink-2);
   transition: color 0.2s ease;
 }
 
 .back-link:hover {
-  color: rgba(36, 31, 27, 0.96);
+  color: var(--ink-0);
 }
 
 .subtitle {
   font-family: 'Ma Shan Zheng', cursive;
   font-size: 1.06rem;
-  color: #687771;
+  color: var(--ink-2);
   margin: 0;
 }
 
@@ -141,7 +138,7 @@ a {
 .section h3 {
   margin: 0 0 0.6rem;
   font-size: 1.1rem;
-  color: #312b27;
+  color: var(--ink-0);
 }
 
 .description,

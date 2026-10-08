@@ -2,10 +2,11 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(180deg, rgba(248, 244, 237, 0.97), rgba(248, 244, 237, 0.92));
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 14px 26px -16px rgba(74, 66, 56, 0.16);
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.05);
 }
 
 .inner {
@@ -23,7 +24,7 @@
   justify-self: start;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   flex-shrink: 0;
   font-family: 'Ma Shan Zheng', cursive;
   font-size: 1.3rem;
@@ -34,8 +35,8 @@
 
 .brandSeal {
   display: block;
-  border-radius: 7px;
-  box-shadow: 0 3px 8px rgba(139, 74, 60, 0.22);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
 }
 
 .links {
@@ -63,8 +64,9 @@
 }
 
 .link[data-active] {
-  color: var(--shanshui-primary);
-  border-color: var(--shanshui-primary);
+  color: var(--ink-0);
+  border-color: var(--ink-0);
+  font-weight: 500;
 }
 
 @media (max-width: 480px) {

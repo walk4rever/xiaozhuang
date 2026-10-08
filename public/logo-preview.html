@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>小庄 (Xiaozhuang) · Air7 黑白极简 Logo & 方案2冷白画布预览</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+    --text-primary: #09090b;
+    --text-secondary: #52525b;
+    --text-subtle: #a1a1aa;
+    --border-soft: rgba(0, 0, 0, 0.08);
+    --border-focus: #09090b;
+    --accent-black: #09090b;
+    --accent-gray: #27272a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 36px 24px 80px;
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Serif SC", "PingFang SC", system-ui, serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+
+  header.intro {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .intro p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 36px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tag {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e4e4e7;
+    color: var(--text-secondary);
+  }
+
+  .tag.active {
+    background: #09090b;
+    color: #ffffff;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 768px) {
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Nav Simulation */
+  .nav-sim {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+  }
+
+  .nav-brand .title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .nav-brand .subtitle {
+    font-size: 12px;
+    color: var(--text-subtle);
+    padding-left: 8px;
+    border-left: 1px solid #e4e4e7;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 18px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .scale-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 28px;
+    padding: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .scale-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .scale-label {
+    font-size: 12px;
+    color: var(--text-subtle);
+    font-family: monospace;
+  }
+
+  .color-swatch-group {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .color-swatch {
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+
+  .dark-card {
+    background: #09090b;
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .btn-sample {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #18181b, #27272a);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #09090b;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    cursor: pointer;
+  }
+
+  .btn-sample-white {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #09090b;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="intro">
+    <h1>小庄 (Xiaozhuang) · 品牌视觉系统预览</h1>
+    <p>Air7 方案 B（曜石黑展翼）+ 方案 2 纯净极简冷白画布落地状态展示</p>
+  </header>
+
+  <!-- Section 1: Logo 核心资产 -->
+  <div class="section-title">
+    <span>1. Logo 矢量标准资产</span>
+    <span class="tag active">方案 B (落地版本)</span>
+  </div>
+
+  <div class="card">
+    <p style="margin-top: 0; color: var(--text-secondary); font-size: 14px;">
+      设计理念：采用 Air7.fun 统一的圆角黑曜石 Squircle 盾牌底座，内嵌纯白 45° 展翼「7 / A」折线几何标，彻底告别传统陈旧的暖色纸泥印，呈现冷峻、现代、高辨识度的工程美学。
+    </p>
+    <div class="scale-row">
+      <div class="scale-item">
+        <svg width="96" height="96" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="scale-label">96px (高清大图)</span>
+      </div>
+
+      <div class="scale-item">
+        <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="scale-label">64px (桌面展示)</span>
+      </div>
+
+      <div class="scale-item">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="scale-label">32px (Favicon)</span>
+      </div>
+
+      <div class="scale-item">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="scale-label">26px (导航栏实装)</span>
+      </div>
+
+      <div class="scale-item">
+        <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="4" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="scale-label">16px (浏览器 Tab)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: 导航栏应用实景 -->
+  <div class="section-title">
+    <span>2. 导航栏实装模拟</span>
+    <span class="tag">冷白纯净高透</span>
+  </div>
+
+  <div class="card" style="padding: 20px;">
+    <div class="nav-sim">
+      <a href="/" class="nav-brand">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#09090b"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+        <span class="title">小庄</span>
+        <span class="subtitle">闲话庄子 · 游于尘垢之外</span>
+      </a>
+
+      <div class="nav-links">
+        <span style="color: #09090b; font-weight: 500;">首页</span>
+        <span>问心</span>
+        <span>寻章</span>
+        <span>述怀</span>
+        <span>慢读</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: 方案 2 冷白色彩体系 -->
+  <div class="section-title">
+    <span>3. 方案 2 极简冷白色板与材质对比</span>
+    <span class="tag">去黄去土 · 纯净冷白</span>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 16px;">现代冷白画布 (已全面实装)</h3>
+      <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+        去除了原有 #f7f3ec / #ede7de 的偏黄泛旧宣纸底，移除了 92% 不透明度的水彩雾层与远山层，还原纯净画布。
+      </p>
+      <div class="color-swatch-group">
+        <div class="color-swatch" style="background: #f8f9fa; border: 1px solid #e4e4e7;">
+          <strong>#f8f9fa</strong>
+          <span style="color: #71717a;">body 画布底</span>
+        </div>
+        <div class="color-swatch" style="background: #ffffff; border: 1px solid #e4e4e7;">
+          <strong>#ffffff</strong>
+          <span style="color: #71717a;">卡片与面板底</span>
+        </div>
+        <div class="color-swatch" style="background: #09090b; color: #ffffff;">
+          <strong>#09090b</strong>
+          <span style="color: #a1a1aa;">主字与黑曜标</span>
+        </div>
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 12px;">
+        <button class="btn-sample">黑曜石主要按钮</button>
+        <button class="btn-sample-white">纯白辅助按钮</button>
+      </div>
+    </div>
+
+    <div class="dark-card">
+      <h3 style="margin-top: 0; font-size: 16px; color: #ffffff;">反色与深色场景适应</h3>
+      <p style="color: #a1a1aa; font-size: 13px; margin-bottom: 16px;">
+        Air7 Logo 在暗色背景下可使用白底黑标（logo-white.svg）或纯黑带细白边模式，保证跨终端多场景统一性。
+      </p>
+      <div style="display: flex; align-items: center; gap: 20px; padding: 16px 0;">
+        <svg width="54" height="54" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#ffffff"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#09090b"/>
+        </svg>
+        <svg width="54" height="54" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#18181b" stroke="#3f3f46" stroke-width="1"/>
+          <path d="M7 10.5 L24.5 10.5 L15 25 L19.8 25 L26 15.5 L26 7 L7 7 Z" fill="#ffffff"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; text-align: center; color: var(--text-subtle); font-size: 13px;">
+    小庄 · Air7.fun 家族产品 · <a href="/" style="color: var(--text-secondary); text-decoration: underline;">返回站点首页</a>
+  </div>
+</div>
+</body>
+</html>

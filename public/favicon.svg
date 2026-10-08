@@ -1,29 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="sealBg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#a55d4e" />
-      <stop offset="100%" stop-color="#8b4a3c" />
-    </linearGradient>
-    <linearGradient id="paperGlow" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#fff8ee" stop-opacity="0.9" />
-      <stop offset="100%" stop-color="#fff8ee" stop-opacity="0" />
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Xiaozhuang Scheme B Monochrome Air7 Squircle background -->
+  <rect width="512" height="512" rx="112" fill="#09090b"/>
 
-  <rect width="64" height="64" rx="16" fill="#f6f1e8" />
-  <rect x="6" y="6" width="52" height="52" rx="14" fill="url(#sealBg)" />
-  <rect x="6" y="6" width="52" height="52" rx="14" fill="url(#paperGlow)" opacity="0.35" />
-  <rect x="6.75" y="6.75" width="50.5" height="50.5" rx="13.25" fill="none" stroke="rgba(90, 50, 40, 0.18)" />
+  <!-- Air7.fun "7 in flight" / "A" in Pure White -->
+  <path d="M 88 174 L 418 108 L 192 408"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="58"
+        stroke-linecap="round"
+        stroke-linejoin="miter"
+        stroke-miterlimit="10"/>
 
-  <text
-    x="32"
-    y="35"
-    text-anchor="middle"
-    dominant-baseline="middle"
-    font-size="28"
-    font-family="KaiTi, STKaiti, 'Noto Serif SC', serif"
-    font-weight="700"
-    fill="#fff7ec"
-    letter-spacing="1"
-  >庄</text>
+  <!-- The "A" crossbar -->
+  <line x1="142" y1="258" x2="348" y2="258"
+        stroke="#ffffff"
+        stroke-width="42"
+        stroke-linecap="round"/>
 </svg>

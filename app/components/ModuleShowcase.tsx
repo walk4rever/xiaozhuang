@@ -18,7 +18,7 @@ const MODULE_CARDS = [
     title: '问心',
     desc: '以阴阳为镜，照见内心之事。起卦前请平静情绪，想清楚所求，默念三遍即可。',
     quote: '山高月小，水落石出',
-    gradient: 'linear-gradient(145deg, #8b4a3c, #a55d4e)',
+    gradient: 'linear-gradient(145deg, #18181b, #27272a)',
   },
   {
     href: '/xun',
@@ -27,7 +27,7 @@ const MODULE_CARDS = [
     title: '寻章',
     desc: '描述你看到的、感受到的，小庄从千年诗文中，帮你找到最贴切的那句话。',
     quote: '一峰则太华千寻，一勺则江湖万里',
-    gradient: 'linear-gradient(145deg, #5f7c77, #77908a)',
+    gradient: 'linear-gradient(145deg, #18181b, #27272a)',
   },
   {
     href: '/du',
@@ -36,7 +36,7 @@ const MODULE_CARDS = [
     title: '慢读',
     desc: '每天一封《经史百家杂钞》节选，不求一下读完，只求慢慢读懂：一点原文，一点解释，一点照见今天的意味。',
     quote: null,
-    gradient: 'linear-gradient(145deg, #8b4a3c, #a55d4e)',
+    gradient: 'linear-gradient(145deg, #18181b, #27272a)',
   },
   {
     href: '/xie',
@@ -45,7 +45,7 @@ const MODULE_CARDS = [
     title: '述怀',
     desc: '从楚辞、道家、史传、词、禅语、唐宋古文、骈文、心学八种传统中随机取法，指定人物语感，写成古典短章。',
     quote: null,
-    gradient: 'linear-gradient(145deg, #8b4a3c, #a55d4e)',
+    gradient: 'linear-gradient(145deg, #18181b, #27272a)',
   },
 ]
 
