@@ -108,25 +108,85 @@ const required = (value: string | undefined, name: string): string => {
 // ---------------------------------------------------------------------------
 // Supabase REST client
 // ---------------------------------------------------------------------------
-const supabaseFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
+const DB_TIMEOUT_MS = 12000
+const DB_MAX_ATTEMPTS = 3
+
+const isRetryableError = (status?: number, err?: unknown): boolean => {
+  if (status && [408, 429, 502, 503, 504].includes(status)) return true
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase()
+    return (
+      err.name === 'AbortError' ||
+      msg.includes('timeout') ||
+      msg.includes('network') ||
+      msg.includes('fetch failed') ||
+      msg.includes('econnreset')
+    )
+  }
+  return false
+}
+
+const supabaseRequest = async (
+  path: string,
+  init?: RequestInit
+): Promise<Response> => {
   const supabaseUrl = required(env.supabaseUrl, 'SUPABASE_URL')
   const serviceRoleKey = required(env.supabaseServiceRoleKey, 'SUPABASE_SERVICE_ROLE_KEY')
+  const url = `${supabaseUrl}/rest/v1/${path}`
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
-  })
+  let lastError: Error | null = null
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(`Supabase request failed: ${response.status} ${text}`)
+  for (let attempt = 1; attempt <= DB_MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), DB_TIMEOUT_MS)
+
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: controller.signal,
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
+          ...(init?.headers ?? {}),
+        },
+      })
+
+      if (!response.ok) {
+        if (isRetryableError(response.status) && attempt < DB_MAX_ATTEMPTS) {
+          const waitMs = attempt * 1500
+          console.warn(
+            `[supabaseRequest] Attempt ${attempt}/${DB_MAX_ATTEMPTS} failed with status ${response.status}. Retrying in ${waitMs}ms...`
+          )
+          await new Promise((r) => setTimeout(r, waitMs))
+          continue
+        }
+        const text = await response.text().catch(() => '')
+        throw new Error(`Supabase request failed: ${response.status} ${text}`)
+      }
+
+      return response
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      if (isRetryableError(undefined, error) && attempt < DB_MAX_ATTEMPTS) {
+        const waitMs = attempt * 1500
+        console.warn(
+          `[supabaseRequest] Attempt ${attempt}/${DB_MAX_ATTEMPTS} caught retryable error (${lastError.message}). Retrying in ${waitMs}ms...`
+        )
+        await new Promise((r) => setTimeout(r, waitMs))
+        continue
+      }
+      throw lastError
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
+  throw lastError ?? new Error('Supabase request failed after max attempts')
+}
+
+const supabaseFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const response = await supabaseRequest(path, init)
   if (response.status === 204) return null as T
   const text = await response.text()
   if (!text) return null as T
@@ -134,23 +194,9 @@ const supabaseFetch = async <T>(path: string, init?: RequestInit): Promise<T> =>
 }
 
 const supabaseFetchPaged = async <T>(path: string): Promise<{ data: T[]; total: number }> => {
-  const supabaseUrl = required(env.supabaseUrl, 'SUPABASE_URL')
-  const serviceRoleKey = required(env.supabaseServiceRoleKey, 'SUPABASE_SERVICE_ROLE_KEY')
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      'Content-Type': 'application/json',
-      Prefer: 'count=exact',
-    },
+  const response = await supabaseRequest(path, {
+    headers: { Prefer: 'count=exact' },
   })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(`Supabase request failed: ${response.status} ${text}`)
-  }
-
   const total = parseInt(response.headers.get('content-range')?.split('/')[1] ?? '0', 10)
   const data = (await response.json()) as T[]
   return { data, total }

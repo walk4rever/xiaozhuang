@@ -11,6 +11,7 @@ import {
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
+export const preferredRegion = 'sin1'
 
 export async function GET(request: Request) {
   const bearer = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? null
